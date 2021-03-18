@@ -37,7 +37,7 @@ module Extension
 
       def theme_extension_specification
         {
-          identifier: "online_store_app_theme_extension",
+          identifier: "online_store_theme_extension",
           features: {
           },
         }

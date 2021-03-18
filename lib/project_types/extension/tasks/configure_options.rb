@@ -1,4 +1,3 @@
-require "pry"
 module Extension
   module Tasks
     class ConfigureOptions
@@ -14,7 +13,7 @@ module Extension
       private
 
       def configure_skip_build(attributes)
-        attributes[:options].merge!(skip_build: attributes[:identifier] == "online_store_app_theme_extension")
+        attributes[:options].merge!(skip_build: attributes[:identifier] == "online_store_theme_extension")
       end
     end
   end

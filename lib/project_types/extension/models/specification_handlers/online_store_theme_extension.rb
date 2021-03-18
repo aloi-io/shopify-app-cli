@@ -5,7 +5,7 @@ require "json"
 module Extension
   module Models
     module SpecificationHandlers
-      class OnlineStoreAppThemeExtension < Default
+      class OnlineStoreThemeExtension < Default
         def create(directory_name, context)
           Dir.mkdir(directory_name)
           context.root = File.join(context.root, directory_name)
