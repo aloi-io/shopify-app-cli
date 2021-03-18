@@ -7,6 +7,7 @@ module Extension
         [
           product_subscription_specification,
           checkout_post_purchase_specification,
+          theme_extension_specification,
         ]
       end
 
@@ -30,6 +31,14 @@ module Extension
             argo: {
               surface_area: "checkout",
             },
+          },
+        }
+      end
+
+      def theme_extension_specification
+        {
+          identifier: "online_store_app_theme_extension",
+          features: {
           },
         }
       end
