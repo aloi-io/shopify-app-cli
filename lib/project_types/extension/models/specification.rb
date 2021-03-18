@@ -26,6 +26,7 @@ module Extension
       property! :identifier
       property :graphql_identifier, converts: :to_str
       property! :features, converts: Features.method(:build), default: -> { [] }
+      property :options
 
       def graphql_identifier
         super || identifier

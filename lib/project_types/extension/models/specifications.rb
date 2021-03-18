@@ -38,6 +38,7 @@ module Extension
         ShopifyCli::Result
           .call(&fetch_specifications)
           .then(&Tasks::ConfigureFeatures)
+          .then(&Tasks::ConfigureOptions)
           .then(&method(:ensure_legacy_compatibility))
           .then(&method(:build_specifications))
           .then(&method(:require_handler_implementations))

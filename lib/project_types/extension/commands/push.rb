@@ -8,10 +8,9 @@ module Extension
 
       def call(args, name)
         Commands::Register.new(@ctx).call(args, name) unless project.registered?
-        # TODO: Don't hardcode this
         # TODO: Fetch the current extension config for theme extensions so we
         # know if we can do a partial update, or if we need to delete any files
-        Commands::Build.new(@ctx).call(args, name) unless project.extension_type_identifier == "ONLINE_STORE_APP_THEME_EXTENSION"
+        Commands::Build.new(@ctx).call(args, name) unless extension_type.specification.options[:skip_build]
 
         CLI::UI::Frame.open(@ctx.message("push.frame_title")) do
           updated_draft_version = update_draft
