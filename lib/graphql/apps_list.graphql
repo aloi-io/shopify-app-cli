@@ -1,0 +1,17 @@
+query appsList {
+  apps {
+    edges {
+      node {
+        id
+        title
+        apiKey
+        apiSecretKeys {
+          secret
+        }
+        appType
+        applicationUrl
+        redirectUrlWhitelist
+      }
+    }
+  }
+}

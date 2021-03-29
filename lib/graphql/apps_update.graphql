@@ -1,0 +1,22 @@
+mutation appUpdate($apiKey: String! $title: String, $applicationUrl: Url) {
+    appUpdate(
+        input: {
+          apiKey: $apiKey
+          title: $title
+          applicationUrl: $applicationUrl
+        }
+    ) {
+        app {
+          id
+          title
+          apiKey
+          apiSecretKeys {
+            secret
+          }
+          appType
+          applicationUrl
+          redirectUrlWhitelist
+        }
+        clientMutationId
+    }
+}

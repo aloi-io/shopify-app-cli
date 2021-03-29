@@ -25,5 +25,7 @@ module ShopifyCli
     register :Logout, "logout", "shopify-cli/commands/logout", true
     register :System, "system", "shopify-cli/commands/system", true
     register :Version, "version", "shopify-cli/commands/version", true
+    register :AppList, "list", "shopify-cli/commands/app_list", true
+    register :AppUpdate, "update", "shopify-cli/commands/app_update", true
   end
 end

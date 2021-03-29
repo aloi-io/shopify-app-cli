@@ -45,6 +45,24 @@ module ShopifyCli
           project_type_select: "What type of project would you like to create?",
         },
 
+        "app:list": {
+          help: <<~HELP
+          List all apps.
+            Usage: {{command:%s list}}
+          HELP
+        },
+
+        "app:update": {
+          help: <<~HELP
+          Update an app.
+            Usage: {{command:%s update --api-key=APIKEY [--name=APPNAME] [--app-url=APPURL]}}
+            Options:
+              {{command:--api-key=APPURL}} \tAPI Key (required). Identifies which app to update
+              {{command:--name=NAME}} \tApp name
+              {{command:--app-url=APPURL}} \tApp URL
+          HELP
+        },
+
         env_file: {
           saving_header: "writing %s file...",
           saving: "writing %s file",
