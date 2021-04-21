@@ -21,7 +21,7 @@ module ShopifyCli
           "apps_update", 
           apiKey: options.flags[:api_key],
           title: options.flags[:name],
-          applicationUrl: options.flags[:applicationUrl]
+          applicationUrl: options.flags[:app_url]
         )
         
         puts resp
