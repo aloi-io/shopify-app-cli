@@ -9,13 +9,14 @@ module Extension
       property :title
       property :type
       property :registration_id
+      property :registration_uuid
       property :api_key
       property :api_secret
 
       def config
         {
           "project_type" => "extension",
-          ExtensionProjectKeys::EXTENSION_TYPE_KEY => type,
+          ExtensionProjectKeys::SPECIFICATION_IDENTIFIER_KEY => type,
         }
       end
 
@@ -27,6 +28,7 @@ module Extension
           extra: {
             ExtensionProjectKeys::TITLE_KEY => title,
             ExtensionProjectKeys::REGISTRATION_ID_KEY => registration_id,
+            ExtensionProjectKeys::REGISTRATION_UUID_KEY => registration_uuid,
           }
         )
       end

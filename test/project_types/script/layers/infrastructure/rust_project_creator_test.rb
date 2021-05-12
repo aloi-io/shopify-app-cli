@@ -9,7 +9,6 @@ describe Script::Layers::Infrastructure::RustProjectCreator do
   let(:language) { "rust" }
   let(:script_id) { "id" }
   let(:script) { Script::Layers::Domain::Script.new(script_id, script_name, extension_point, language) }
-  let(:project) { TestHelpers::FakeProject.new }
   let(:context) { TestHelpers::FakeContext.new }
   let(:extension_point_type) { "payment_filter" }
   let(:extension_point) { Script::Layers::Domain::ExtensionPoint.new(extension_point_type, extension_point_config) }
@@ -28,8 +27,6 @@ describe Script::Layers::Infrastructure::RustProjectCreator do
 
   before do
     context.mkdir_p(script_name)
-    Script::ScriptProject.stubs(:current).returns(project)
-    project.directory = script_name
   end
 
   def system_output(msg:, success:)
@@ -81,7 +78,7 @@ describe Script::Layers::Infrastructure::RustProjectCreator do
         .with("git init").once
         .returns(system_output(msg: "Couldn't initialize git repository", success: false))
 
-      assert_raises(Script::Layers::Domain::Errors::ServiceFailureError) { subject }
+      assert_raises(Script::Layers::Infrastructure::Errors::SystemCallFailureError) { subject }
     end
 
     it "should raise a service failure error if the git remote cannot be configured" do
@@ -92,7 +89,7 @@ describe Script::Layers::Infrastructure::RustProjectCreator do
         .with("git remote add -f origin #{extension_point.sdks.rust.package}").once
         .returns(system_output(msg: "Couldn't set remote origin", success: false))
 
-      assert_raises(Script::Layers::Domain::Errors::ServiceFailureError) { subject }
+      assert_raises(Script::Layers::Infrastructure::Errors::SystemCallFailureError) { subject }
     end
 
     it "should raise a service failure error if sparse checkout cannot be configured" do
@@ -103,7 +100,7 @@ describe Script::Layers::Infrastructure::RustProjectCreator do
         .with("git config core.sparsecheckout true").once
         .returns(system_output(msg: "Couldn't set sparse checkout", success: false))
 
-      assert_raises(Script::Layers::Domain::Errors::ServiceFailureError) { subject }
+      assert_raises(Script::Layers::Infrastructure::Errors::SystemCallFailureError) { subject }
     end
 
     it "should raise a service failure error if the sparse checkout config cannot be written" do
@@ -113,7 +110,7 @@ describe Script::Layers::Infrastructure::RustProjectCreator do
         .with("echo #{extension_point.type}/default >> .git/info/sparse-checkout").once
         .returns(system_output(msg: "Couldn't write to the sparse checkout config", success: false))
 
-      assert_raises(Script::Layers::Domain::Errors::ServiceFailureError) { subject }
+      assert_raises(Script::Layers::Infrastructure::Errors::SystemCallFailureError) { subject }
     end
 
     it "raises if there is an error pulling from the remote's origin" do
@@ -123,7 +120,7 @@ describe Script::Layers::Infrastructure::RustProjectCreator do
         .with("git pull origin main")
         .once
         .returns(system_output(msg: "Fatal", success: false))
-      assert_raises(Script::Layers::Domain::Errors::ServiceFailureError) { subject }
+      assert_raises(Script::Layers::Infrastructure::Errors::SystemCallFailureError) { subject }
     end
   end
 end

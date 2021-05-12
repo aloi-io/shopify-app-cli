@@ -1,26 +1,26 @@
 mutation AppScriptUpdateOrCreate(
   $extensionPointName: ExtensionPointName!,
   $title: String,
-  $description: String,
   $configUi: String,
   $sourceCode: String,
   $language: String,
   $force: Boolean,
   $schemaMajorVersion: String,
   $schemaMinorVersion: String,
-  $useMsgpack: Boolean
+  $useMsgpack: Boolean,
+  $uuid: String
 ) {
   appScriptUpdateOrCreate(
     extensionPointName: $extensionPointName
     title: $title
-    description: $description
     configUi: $configUi
     sourceCode: $sourceCode
     language: $language
     force: $force
     schemaMajorVersion: $schemaMajorVersion
     schemaMinorVersion: $schemaMinorVersion
-    useMsgpack: $useMsgpack
+    useMsgpack: $useMsgpack,
+    uuid: $uuid
 ) {
     userErrors {
       field
@@ -28,11 +28,11 @@ mutation AppScriptUpdateOrCreate(
       tag
     }
     appScript {
+      uuid
       appKey
       configSchema
       extensionPointName
       title
-      description
     }
   }
 }

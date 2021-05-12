@@ -63,9 +63,7 @@ module Script
 
         def compile
           check_compilation_dependencies!
-
-          out, status = ctx.capture2e(SCRIPT_SDK_BUILD)
-          raise Domain::Errors::ServiceFailureError, out unless status.success?
+          CommandRunner.new(ctx: ctx).call(SCRIPT_SDK_BUILD)
         end
 
         def check_compilation_dependencies!
@@ -81,11 +79,11 @@ module Script
         end
 
         def bytecode
-          blob = format(BYTECODE_FILE, name: script_name)
-          raise Errors::WebAssemblyBinaryNotFoundError unless @ctx.file_exist?(blob)
+          filename = format(BYTECODE_FILE, name: script_name)
+          raise Errors::WebAssemblyBinaryNotFoundError unless ctx.file_exist?(filename)
 
-          contents = File.read(blob)
-          @ctx.rm(blob)
+          contents = ctx.binread(filename)
+          ctx.rm(filename)
 
           contents
         end

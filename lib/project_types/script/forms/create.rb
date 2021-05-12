@@ -3,11 +3,10 @@
 module Script
   module Forms
     class Create < ShopifyCli::Form
-      flag_arguments :extension_point, :name, :language, :description
+      flag_arguments :extension_point, :name, :language
 
       def ask
         self.name = valid_name
-        self.description ||= ask_description
         self.extension_point ||= ask_extension_point
         self.language = ask_language
       end
@@ -17,16 +16,12 @@ module Script
       def ask_extension_point
         CLI::UI::Prompt.ask(
           @ctx.message("script.forms.create.select_extension_point"),
-          options: Layers::Application::ExtensionPoints.non_deprecated_types
+          options: Layers::Application::ExtensionPoints.available_types
         )
       end
 
       def ask_name
         CLI::UI::Prompt.ask(@ctx.message("script.forms.create.script_name"))
-      end
-
-      def ask_description
-        CLI::UI::Prompt.ask(@ctx.message("script.forms.create.description"))
       end
 
       def valid_name
@@ -36,13 +31,7 @@ module Script
       end
 
       def ask_language
-        if language
-          if Layers::Application::ExtensionPoints.supported_language?(type: extension_point, language: language)
-            return language.downcase
-          else
-            raise Errors::InvalidLanguageError.new(language, extension_point)
-          end
-        end
+        return language.downcase if language
 
         all_languages = Layers::Application::ExtensionPoints.languages(type: extension_point)
         return all_languages.first if all_languages.count == 1

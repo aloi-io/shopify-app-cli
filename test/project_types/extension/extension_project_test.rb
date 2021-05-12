@@ -16,7 +16,7 @@ module Extension
 
       assert File.exist?(".shopify-cli.yml")
       assert_equal :extension, ShopifyCli::Project.current_project_type
-      assert_equal @test_extension_type.identifier, ExtensionProject.current.extension_type_identifier
+      assert_equal @test_extension_type.identifier, ExtensionProject.current.specification_identifier
     end
 
     def test_write_env_file_creates_env_file
@@ -43,6 +43,54 @@ module Extension
       assert_equal api_secret, project.app.secret
       assert_equal title, project.title
       assert_equal registration_id, project.registration_id
+    end
+
+    def test_env_file_writes_temporary_uuid_if_no_registration_uuid_present
+      api_key = "1234"
+      api_secret = "5678"
+      title = "Test Title"
+      registration_id = 55
+
+      new_context = TestHelpers::FakeContext.new(root: Dir.mktmpdir)
+      FileUtils.cd(new_context.root)
+
+      ExtensionProject.write_cli_file(context: new_context, type: @test_extension_type.identifier)
+      ExtensionProject.write_env_file(
+        context: new_context,
+        api_key: api_key,
+        api_secret: api_secret,
+        title: title,
+        registration_id: registration_id
+      )
+
+      assert File.exist?(".env")
+      project = ExtensionProject.current
+      project.registration_uuid.start_with?("dev")
+    end
+
+    def test_env_file_does_not_write_temporary_registration_uuid_if_uuid_present
+      api_key = "1234"
+      api_secret = "5678"
+      title = "Test Title"
+      registration_id = 55
+      registration_uuid = "123"
+
+      new_context = TestHelpers::FakeContext.new(root: Dir.mktmpdir)
+      FileUtils.cd(new_context.root)
+
+      ExtensionProject.write_cli_file(context: new_context, type: @test_extension_type.identifier)
+      ExtensionProject.write_env_file(
+        context: new_context,
+        api_key: api_key,
+        api_secret: api_secret,
+        title: title,
+        registration_id: registration_id,
+        registration_uuid: registration_uuid
+      )
+
+      assert File.exist?(".env")
+      project = ExtensionProject.current
+      refute project.registration_uuid.start_with?("dev")
     end
 
     def test_ensures_registered_is_true_only_if_api_key_api_secret_and_registration_id_are_present
@@ -84,7 +132,7 @@ module Extension
     def test_extension_type_returns_the_set_type_identifier
       setup_temp_project
 
-      assert_equal @type, @project.extension_type_identifier
+      assert_equal @type, @project.specification_identifier
     end
 
     def test_detects_if_registration_id_is_missing_or_invalid

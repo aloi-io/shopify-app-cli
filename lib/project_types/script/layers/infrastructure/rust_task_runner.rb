@@ -7,6 +7,7 @@ module Script
 
         BUILD_TARGET = "wasm32-unknown-unknown"
         METADATA_FILE = "build/metadata.json"
+        CARGO_BUILD_CMD = "cargo build --target=#{BUILD_TARGET} --release"
 
         def initialize(ctx, script_name)
           @ctx = ctx
@@ -42,8 +43,7 @@ module Script
         private
 
         def compile
-          out, status = ctx.capture2e("cargo build --target=#{BUILD_TARGET} --release")
-          raise Domain::Errors::ServiceFailureError, out unless status.success?
+          CommandRunner.new(ctx: ctx).call(CARGO_BUILD_CMD)
         end
 
         def bytecode
@@ -51,7 +51,7 @@ module Script
           binary_path = "target/#{BUILD_TARGET}/release/#{binary_name}"
           raise Errors::WebAssemblyBinaryNotFoundError unless ctx.file_exist?(binary_path)
 
-          File.read(binary_path)
+          ctx.binread(binary_path)
         end
       end
     end

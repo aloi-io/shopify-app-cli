@@ -5,8 +5,6 @@ module Script
     module Infrastructure
       module Errors
         class AppNotInstalledError < ScriptProjectError; end
-        class AppScriptNotPushedError < ScriptProjectError; end
-        class AppScriptUndefinedError < ScriptProjectError; end
         class BuildError < ScriptProjectError; end
         class ConfigUiSyntaxError < ScriptProjectError; end
 
@@ -19,6 +17,15 @@ module Script
           end
         end
 
+        class ConfigUiInvalidInputModeError < ScriptProjectError
+          attr_reader :filename, :valid_input_modes
+          def initialize(filename, valid_input_modes)
+            super()
+            @filename = filename
+            @valid_input_modes = valid_input_modes
+          end
+        end
+
         class ConfigUiFieldsMissingKeysError < ScriptProjectError
           attr_reader :filename, :missing_keys
           def initialize(filename, missing_keys)
@@ -28,9 +35,29 @@ module Script
           end
         end
 
+        class ConfigUiFieldsInvalidTypeError < ScriptProjectError
+          attr_reader :filename, :valid_types
+          def initialize(filename, valid_types)
+            super()
+            @filename = filename
+            @valid_types = valid_types
+          end
+        end
+
         class DependencyInstallError < ScriptProjectError; end
+        class DeprecatedEPError < ScriptProjectError; end
         class EmptyResponseError < ScriptProjectError; end
         class ForbiddenError < ScriptProjectError; end
+        class InvalidContextError < ScriptProjectError; end
+
+        class InvalidLanguageError < ScriptProjectError
+          attr_reader :language, :extension_point_type
+          def initialize(language, extension_point_type)
+            super()
+            @language = language
+            @extension_point_type = extension_point_type
+          end
+        end
 
         class GraphqlError < ScriptProjectError
           attr_reader :errors
@@ -42,6 +69,15 @@ module Script
 
         class ProjectCreatorNotFoundError < ScriptProjectError; end
 
+        class SystemCallFailureError < ScriptProjectError
+          attr_reader :out, :cmd
+          def initialize(out:, cmd:)
+            super()
+            @out = out
+            @cmd = cmd
+          end
+        end
+
         class ScriptRepushError < ScriptProjectError
           attr_reader :api_key
           def initialize(api_key)
@@ -50,15 +86,8 @@ module Script
           end
         end
 
-        class ScriptServiceUserError < ScriptProjectError
-          def initialize(query_name, errors)
-            super("Failed performing #{query_name}. Errors: #{errors}.")
-          end
-        end
-
+        class ScriptProjectAlreadyExistsError < ScriptProjectError; end
         class ShopAuthenticationError < ScriptProjectError; end
-        class ShopScriptConflictError < ScriptProjectError; end
-        class ShopScriptUndefinedError < ScriptProjectError; end
         class TaskRunnerNotFoundError < ScriptProjectError; end
         class BuildScriptNotFoundError < ScriptProjectError; end
         class InvalidBuildScriptError < ScriptProjectError; end

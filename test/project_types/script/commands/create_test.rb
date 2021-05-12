@@ -16,14 +16,13 @@ module Script
         @language = "assemblyscript"
         @script_name = "name"
         @ep_type = "discount"
-        @description = "description"
-        @script_project = TestHelpers::FakeScriptProject.new(
+        @no_config_ui = false
+        @script_project = TestHelpers::FakeScriptProjectRepository.new.create(
           language: @language,
           extension_point_type: @ep_type,
           script_name: @script_name,
-          description: @description
+          no_config_ui: @no_config_ui
         )
-        @no_config_ui = false
         Layers::Application::ExtensionPoints.stubs(:languages).returns(%w(assemblyscript))
       end
 
@@ -41,7 +40,6 @@ module Script
           language: @language,
           script_name: @script_name,
           extension_point_type: @ep_type,
-          description: @description,
           no_config_ui: @no_config_ui
         ).returns(@script_project)
 
@@ -59,7 +57,6 @@ module Script
           language: @language,
           script_name: @script_name,
           extension_point_type: @ep_type,
-          description: @description,
           no_config_ui: @no_config_ui
         ).returns(@script_project)
 
@@ -77,62 +74,11 @@ module Script
         Script::Commands::Create.help
       end
 
-      def test_cleanup_after_error
-        Dir.mktmpdir(@script_name)
-        Layers::Application::CreateScript.expects(:call).with(
-          ctx: @context,
-          language: @language,
-          script_name: @script_name,
-          extension_point_type: @ep_type,
-          description: @description,
-          no_config_ui: @no_config_ui
-        ).raises(StandardError)
-
-        ScriptProject.expects(:cleanup).with(
-          ctx: @context,
-          script_name: @script_name,
-          root_dir: @context.root
-        )
-
-        assert_raises StandardError do
-          capture_io do
-            perform_command
-          end
-        end
-
-        refute @context.dir_exist?(@script_name)
-      end
-
-      def test_directory_already_exists
-        error = Script::Errors::ScriptProjectAlreadyExistsError.new
-        Dir.mktmpdir(@script_name)
-        Layers::Application::CreateScript.expects(:call).with(
-          ctx: @context,
-          language: @language,
-          script_name: @script_name,
-          extension_point_type: @ep_type,
-          description: @description,
-          no_config_ui: @no_config_ui
-        ).raises(error)
-
-        UI::ErrorHandler.expects(:pretty_print_and_raise).with(
-          error,
-          failed_op: @context.message("script.create.error.operation_failed")
-        )
-
-        ScriptProject.expects(:cleanup).never
-
-        capture_io do
-          perform_command
-        end
-      end
-
       private
 
       def perform_command_snake_case
         args = {
           name: @script_name,
-          description: @description,
           extension_point: @ep_type,
           language: @language,
         }
@@ -142,7 +88,7 @@ module Script
 
       def perform_command
         run_cmd(
-          "create script --name=#{@script_name} --description=#{@description}
+          "create script --name=#{@script_name}
           --extension-point=#{@ep_type} --language=#{@language} #{@no_config_ui ? "--no-config-ui" : ""}"
         )
       end
