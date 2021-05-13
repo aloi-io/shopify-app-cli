@@ -23,7 +23,7 @@ module ShopifyCli
           apiKey: options.flags[:api_key],
           title: options.flags[:name],
           applicationUrl: options.flags[:app_url],
-          redirectUrlWhitelist: options.flags[:redirect_url].split(/\s*,\s*/)
+          redirectUrlWhitelist: options.flags[:redirect_url] ? options.flags[:redirect_url].split(/\s*,\s*/) : nil
         )
         
         puts resp
