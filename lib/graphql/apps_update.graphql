@@ -1,9 +1,10 @@
-mutation appUpdate($apiKey: String! $title: String, $applicationUrl: Url) {
+mutation appUpdate($apiKey: String! $title: String, $applicationUrl: Url, $redirectUrlWhitelist: [Url]) {
     appUpdate(
         input: {
           apiKey: $apiKey
           title: $title
           applicationUrl: $applicationUrl
+          redirectUrlWhitelist: $redirectUrlWhitelist
         }
     ) {
         app {
@@ -18,5 +19,8 @@ mutation appUpdate($apiKey: String! $title: String, $applicationUrl: Url) {
           redirectUrlWhitelist
         }
         clientMutationId
+        userErrors {
+          message
+        }
     }
 }

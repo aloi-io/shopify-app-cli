@@ -7,6 +7,7 @@ module ShopifyCli
         parser.on("--api-key=KEY") { |t| flags[:api_key] = t }
         parser.on("--name=NAME") { |t| flags[:name] = t }
         parser.on("--app-url=APPURL") { |t| flags[:app_url] = t }
+        parser.on("--redirect-url=REDIRECTURL") { |t| flags[:redirect_url] = t }
       end
 
       def self.help
@@ -17,11 +18,12 @@ module ShopifyCli
         # return @ctx.puts(self.class.help) if options.flags[:api_key].nil?
 
         resp = ShopifyCli::PartnersAPI.query(
-          @ctx, 
-          "apps_update", 
+          @ctx,
+          "apps_update",
           apiKey: options.flags[:api_key],
           title: options.flags[:name],
-          applicationUrl: options.flags[:app_url]
+          applicationUrl: options.flags[:app_url],
+          redirectUrlWhitelist: options.flags[:redirect_url].split(/\s*,\s*/)
         )
         
         puts resp
