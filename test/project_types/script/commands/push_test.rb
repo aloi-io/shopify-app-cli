@@ -9,18 +9,18 @@ module Script
         super
         @context = TestHelpers::FakeContext.new
         @api_key = "apikey"
+        @uuid = "uuid"
         @force = true
-        @env = ShopifyCli::Resources::EnvFile.new(api_key: @api_key, secret: "shh")
+        @env = ShopifyCLI::Resources::EnvFile.new(api_key: @api_key, secret: "shh", extra: { "UUID" => @uuid })
         @script_project_repo = TestHelpers::FakeScriptProjectRepository.new
         @script_project_repo.create(
           language: "assemblyscript",
           extension_point_type: "discount",
           script_name: "script_name",
-          no_config_ui: false,
           env: @env
         )
         Script::Layers::Infrastructure::ScriptProjectRepository.stubs(:new).returns(@script_project_repo)
-        ShopifyCli::ProjectType.load_type(:script)
+        ShopifyCLI::Tasks::EnsureProjectType.stubs(:call).with(@context, :script).returns(true)
       end
 
       def test_calls_push_script
@@ -34,10 +34,10 @@ module Script
       end
 
       def test_help
-        ShopifyCli::Context
+        ShopifyCLI::Context
           .expects(:message)
-          .with("script.push.help", ShopifyCli::TOOL_NAME)
-        Script::Commands::Push.help
+          .with("script.push.help", ShopifyCLI::TOOL_NAME)
+        Script::Command::Push.help
       end
 
       def test_push_propagates_error_when_ensure_env_fails
@@ -51,10 +51,47 @@ module Script
         assert_equal err_msg, e.message
       end
 
+      def test_does_not_force_push_if_user_env_already_existed
+        @force = false
+        Layers::Application::PushScript.expects(:call).with(ctx: @context, force: @force)
+        perform_command
+      end
+
+      def test_force_pushes_script_if_user_env_was_just_created
+        @force = false
+        Tasks::EnsureEnv.expects(:call).returns(true)
+        Layers::Application::PushScript.expects(:call).with(ctx: @context, force: true)
+        perform_command
+      end
+
+      def test_push_doesnt_print_api_key_when_it_hasnt_been_selected
+        Tasks::EnsureEnv.expects(:call)
+        @script_project_repo.expects(:get).returns(nil)
+
+        UI::ErrorHandler.expects(:pretty_print_and_raise).with do |_error, args|
+          assert_equal args[:failed_op], @context.message("script.push.error.operation_failed_no_api_key")
+        end
+
+        perform_command
+      end
+
+      def test_push_prints_api_key_when_it_has_been_selected
+        Tasks::EnsureEnv.expects(:call)
+        Layers::Application::PushScript.expects(:call).raises(StandardError.new)
+
+        UI::ErrorHandler.expects(:pretty_print_and_raise).with do |_error, args|
+          assert_equal args[:failed_op], @context.message(
+            "script.push.error.operation_failed_with_api_key", api_key: @api_key
+          )
+        end
+
+        perform_command
+      end
+
       private
 
       def perform_command
-        capture_io { run_cmd("push --force") }
+        capture_io { run_cmd("script push #{@force ? "--force" : ""}") }
       end
     end
   end

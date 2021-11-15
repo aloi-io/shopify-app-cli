@@ -30,7 +30,7 @@ module Extension
           argo.config(context)
         end
 
-        def create(directory_name, context)
+        def create(directory_name, context, **_args)
           argo.create(directory_name, identifier, context)
         end
 
@@ -42,12 +42,69 @@ module Extension
           []
         end
 
-        def serve(context)
-          Features::ArgoServe.new(specification_handler: self, context: context).call
+        def choose_port?(context)
+          return true if supports_development_server?
+          argo_runtime(context).supports?(:port)
+        end
+
+        def establish_tunnel?(context)
+          return true if supports_development_server?
+          argo_runtime(context).supports?(:public_url)
+        end
+
+        def serve(context:, port:, tunnel_url:, resource_url:)
+          Features::ArgoServe.new(
+            specification_handler: self,
+            argo_runtime: argo_runtime(context),
+            context: context,
+            port: port,
+            tunnel_url: tunnel_url,
+            resource_url: resource_url
+          ).call
         end
 
         def renderer_package(context)
           argo.renderer_package(context)
+        end
+
+        def argo_runtime(context)
+          return if supports_development_server?
+
+          @argo_runtime ||= Features::ArgoRuntime.find(
+            cli_package: cli_package(context),
+            identifier: identifier
+          )
+        end
+
+        def cli_package(context)
+          cli_package_name = specification.features.argo&.cli_package_name
+          return unless cli_package_name
+
+          js_system = ShopifyCLI::JsSystem.new(ctx: context)
+          Tasks::FindNpmPackages.exactly_one_of(cli_package_name, js_system: js_system)
+            .unwrap { |_e| context.abort(context.message("errors.package_not_found", cli_package_name)) }
+        end
+
+        def message_for_extension(key, *params)
+          override_key = "overrides.#{key}"
+          key_parts = override_key.split(".").map(&:to_sym)
+          if (str = messages.dig(*key_parts))
+            str % params
+          else
+            ShopifyCLI::Context.message(key, *params)
+          end
+        end
+
+        def supplies_resource_url?
+          false
+        end
+
+        def build_resource_url(shop)
+          raise NotImplementedError
+        end
+
+        def server_config_file
+          "shopifile.yml"
         end
 
         protected
@@ -55,7 +112,7 @@ module Extension
         def argo
           Features::Argo.new(
             git_template: specification.features.argo.git_template,
-            renderer_package_name: specification.features.argo.renderer_package_name,
+            renderer_package_name: specification.features.argo.renderer_package_name
           )
         end
 
@@ -68,6 +125,10 @@ module Extension
 
         def messages
           @messages ||= Messages::TYPES[identifier.downcase.to_sym] || {}
+        end
+
+        def supports_development_server?
+          Models::DevelopmentServerRequirements.supported?(identifier)
         end
       end
     end

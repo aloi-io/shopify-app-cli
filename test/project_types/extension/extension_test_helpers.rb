@@ -6,7 +6,6 @@ module Extension
     autoload :TestExtension, "project_types/extension/extension_test_helpers/test_extension"
     autoload :TestExtensionSetup, "project_types/extension/extension_test_helpers/test_extension_setup"
     autoload :TempProjectSetup, "project_types/extension/extension_test_helpers/temp_project_setup"
-    autoload :Messages, "project_types/extension/extension_test_helpers/messages"
     autoload :DummyArgo, "project_types/extension/extension_test_helpers/dummy_argo"
     autoload :DummySpecifications, "project_types/extension/extension_test_helpers/dummy_specifications"
 
@@ -19,13 +18,16 @@ module Extension
       autoload :FetchSpecifications, "project_types/extension/extension_test_helpers/stubs/fetch_specifications"
     end
 
-    def self.test_specification_handler
-      specification_handlers = DummySpecifications.build(
+    def self.test_specifications(type_identifier: "TEST_EXTENSION")
+      DummySpecifications.build(
+          identifier: type_identifier.downcase,
         custom_handler_root: File.expand_path("../", __FILE__),
         custom_handler_namespace: ::Extension::ExtensionTestHelpers,
-      )
+        )
+    end
 
-      specification_handler = specification_handlers["TEST_EXTENSION"]
+    def self.test_specification_handler(type_identifier: "TEST_EXTENSION")
+      specification_handler = test_specifications[type_identifier]
       if specification_handler.nil?
         raise "Unable to retrieve specification handler due to broken test setup"
       end
@@ -33,15 +35,18 @@ module Extension
       specification_handler
     end
 
-    def self.fake_extension_project(with_mocks:,
+    def self.fake_extension_project(
+      with_mocks: false,
       api_key: "TEST_KEY",
       api_secret: "TEST_SECRET",
+      directory: "fake/dir",
       title: "Test",
-      type_identifier: test_specification_handler.identifier,
+      type_identifier: "TEST_EXTENSION",
       registration_id: 55,
-      registration_uuid: "db946ca8-a925-11eb-bcbc-0242ac130002")
-
+      registration_uuid: "db946ca8-a925-11eb-bcbc-0242ac130002"
+    )
       project = FakeExtensionProject.new(
+        directory: directory,
         api_key: api_key,
         api_secret: api_secret,
         title: title,
@@ -51,14 +56,10 @@ module Extension
       )
 
       if with_mocks
-        ShopifyCli::Project.stubs(:current).returns(project)
-        ShopifyCli::Project.stubs(:has_current?).returns(true)
+        ShopifyCLI::Project.stubs(:current).returns(project)
+        ShopifyCLI::Project.stubs(:has_current?).returns(true)
         ExtensionProject.stubs(:current).returns(project)
-        specifications = DummySpecifications.build(
-          identifier: type_identifier.downcase,
-          custom_handler_root: File.expand_path("../", __FILE__),
-          custom_handler_namespace: ::Extension::ExtensionTestHelpers,
-        )
+        specifications = test_specifications(type_identifier: type_identifier)
         Models::Specifications.stubs(:new).returns(specifications)
       end
 

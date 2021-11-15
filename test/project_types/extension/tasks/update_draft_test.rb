@@ -7,12 +7,11 @@ module Extension
     class UpdateDraftTest < MiniTest::Test
       include TestHelpers::FakeUI
       include TestHelpers::Partners
-      include ExtensionTestHelpers::Messages
       include ExtensionTestHelpers::Stubs::UpdateDraft
 
       def setup
         super
-        ShopifyCli::ProjectType.load_type(:extension)
+        ShopifyCLI::ProjectType.load_type(:extension)
 
         @api_key = "FAKE_API_KEY"
         @registration_id = 42
@@ -46,7 +45,7 @@ module Extension
       def test_aborts_with_parse_error_if_no_updated_version_or_errors_are_returned
         stub_update_draft_failure(errors: [], **@input)
 
-        io = capture_io_and_assert_raises(ShopifyCli::Abort) do
+        io = capture_io_and_assert_raises(ShopifyCLI::Abort) do
           Tasks::UpdateDraft.call(
             context: @context,
             api_key: @api_key,
@@ -63,7 +62,7 @@ module Extension
         user_errors = [{ field: ["field"], UserErrors::MESSAGE_FIELD => "An error occurred on field" }]
         stub_update_draft_failure(errors: user_errors, **@input)
 
-        io = capture_io_and_assert_raises(ShopifyCli::Abort) do
+        io = capture_io_and_assert_raises(ShopifyCLI::Abort) do
           Tasks::UpdateDraft.call(
             context: @context,
             api_key: @api_key,

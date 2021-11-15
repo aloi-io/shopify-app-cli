@@ -8,7 +8,7 @@ module Extension
 
         def setup
           super
-          ShopifyCli::ProjectType.load_type(:extension)
+          ShopifyCLI::ProjectType.load_type(:extension)
         end
 
         def test_accepts_a_valid_name_as_property
@@ -22,6 +22,18 @@ module Extension
           AskName.new(ctx: context, prompt: ->(_msg) { "Valid Name" }).call(OpenStruct.new).tap do |result|
             assert_predicate(result, :success?)
             assert_equal("Valid Name", result.value.name)
+          end
+        end
+
+        def test_does_not_prompt_for_name_for_theme_app_extensions
+          project_details = OpenStruct.new(
+            type: OpenStruct.new(
+              identifier: "THEME_APP_EXTENSION",
+            )
+          )
+
+          AskName.new(ctx: context, prompt: ->(_msg) { "Not the name" }).call(project_details).tap do |result|
+            assert_equal("theme-app-extension", result.value.name)
           end
         end
 

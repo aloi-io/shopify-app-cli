@@ -1,11 +1,15 @@
 # frozen_string_literal: true
 module Rails
-  module Commands
-    class Create < ShopifyCli::SubCommand
+  class Command
+    class Create < ShopifyCLI::Command::AppSubCommand
+      unless ShopifyCLI::Environment.acceptance_test?
+        prerequisite_task :ensure_authenticated
+      end
+
       USER_AGENT_CODE = <<~USERAGENT
         module ShopifyAPI
           class Base < ActiveResource::Base
-            self.headers['User-Agent'] << " | ShopifyApp/\#{ShopifyApp::VERSION} | Shopify App CLI"
+            self.headers['User-Agent'] << " | ShopifyApp/\#{ShopifyApp::VERSION} | Shopify CLI"
           end
         end
       USERAGENT
@@ -16,19 +20,21 @@ module Rails
         # backwards compatibility allow 'title' for now
         parser.on("--title=TITLE") { |t| flags[:title] = t }
         parser.on("--name=NAME") { |t| flags[:title] = t }
-        parser.on("--organization_id=ID") { |url| flags[:organization_id] = url }
-        parser.on("--organization-id=ID") { |url| flags[:organization_id] = url }
+        parser.on("--organization_id=ID") { |id| flags[:organization_id] = id }
+        parser.on("--organization-id=ID") { |id| flags[:organization_id] = id }
+        parser.on("--store=MYSHOPIFYDOMAIN") { |url| flags[:shop_domain] = url }
+        # backwards compatibility allow 'shop domain' for now
         parser.on("--shop_domain=MYSHOPIFYDOMAIN") { |url| flags[:shop_domain] = url }
         parser.on("--shop-domain=MYSHOPIFYDOMAIN") { |url| flags[:shop_domain] = url }
-        parser.on("--type=APPTYPE") { |url| flags[:type] = url }
+        parser.on("--type=APPTYPE") { |type| flags[:type] = type }
         parser.on("--db=DB") { |db| flags[:db] = db }
         parser.on("--rails_opts=RAILSOPTS") { |opts| flags[:rails_opts] = opts }
         parser.on("--rails-opts=RAILSOPTS") { |opts| flags[:rails_opts] = opts }
       end
 
       def call(args, _name)
-        form = Forms::Create.ask(@ctx, args, options.flags)
-        return @ctx.puts(self.class.help) if form.nil?
+        form_data = self.form_data(args)
+        return @ctx.puts(self.class.help) if form_data.nil?
 
         ruby_version = Ruby.version(@ctx)
         @ctx.abort(@ctx.message("rails.create.error.invalid_ruby_version")) unless
@@ -37,39 +43,66 @@ module Rails
         check_node
         check_yarn
 
-        build(form.name, form.db)
+        build(form_data.name, form_data.db)
+
         set_custom_ua
-        ShopifyCli::Project.write(
+        ShopifyCLI::Project.write(
           @ctx,
           project_type: "rails",
-          organization_id: form.organization_id,
+          organization_id: form_data.organization_id,
         )
 
-        api_client = ShopifyCli::Tasks::CreateApiClient.call(
-          @ctx,
-          org_id: form.organization_id,
-          title: form.title,
-          type: form.type,
-        )
+        api_client = if ShopifyCLI::Environment.acceptance_test?
+          {
+            "apiKey" => "public_api_key",
+            "apiSecretKeys" => [
+              {
+                "secret" => "api_secret_key",
+              },
+            ],
+          }
+        else
+          ShopifyCLI::Tasks::CreateApiClient.call(
+            @ctx,
+            org_id: form_data.organization_id,
+            title: form_data.title,
+            type: form_data.type,
+          )
+        end
 
-        ShopifyCli::Resources::EnvFile.new(
+        ShopifyCLI::Resources::EnvFile.new(
           api_key: api_client["apiKey"],
           secret: api_client["apiSecretKeys"].first["secret"],
-          shop: form.shop_domain,
+          shop: form_data.shop_domain,
           scopes: "write_products,write_customers,write_draft_orders",
         ).write(@ctx)
 
-        partners_url = ShopifyCli::PartnersAPI.partners_url_for(form.organization_id, api_client["id"], local_debug?)
+        partners_url = ShopifyCLI::PartnersAPI.partners_url_for(form_data.organization_id, api_client["id"])
 
-        @ctx.puts(@ctx.message("apps.create.info.created", form.title, partners_url))
-        @ctx.puts(@ctx.message("apps.create.info.serve", form.name, ShopifyCli::TOOL_NAME))
-        unless ShopifyCli::Shopifolk.acting_as_shopify_organization?
-          @ctx.puts(@ctx.message("apps.create.info.install", partners_url, form.title))
+        @ctx.puts(@ctx.message("apps.create.info.created", form_data.title, partners_url))
+        @ctx.puts(@ctx.message("apps.create.info.serve", form_data.name, ShopifyCLI::TOOL_NAME, "rails"))
+        unless ShopifyCLI::Shopifolk.acting_as_shopify_organization?
+          @ctx.puts(@ctx.message("apps.create.info.install", partners_url, form_data.title))
+        end
+      end
+
+      def form_data(args)
+        if ShopifyCLI::Environment.acceptance_test?
+          Struct.new(:title, :name, :organization_id, :type, :shop_domain, :db, keyword_init: true).new(
+            title: options.flags[:title],
+            name: options.flags[:title],
+            organization_id: "123",
+            shop_domain: "test.shopify.io",
+            type: "public",
+            db: options.flags[:db]
+          )
+        else
+          Forms::Create.ask(@ctx, args, options.flags)
         end
       end
 
       def self.help
-        ShopifyCli::Context.message("rails.create.help", ShopifyCli::TOOL_NAME, ShopifyCli::TOOL_NAME)
+        ShopifyCLI::Context.message("rails.create.help", ShopifyCLI::TOOL_NAME, ShopifyCLI::TOOL_NAME)
       end
 
       private
@@ -80,7 +113,7 @@ module Rails
           @ctx.abort(@ctx.message("rails.create.error.node_required")) unless @ctx.windows?
           @ctx.puts("{{x}} {{red:" + @ctx.message("rails.create.error.node_required") + "}}")
           @ctx.puts(@ctx.message("rails.create.info.open_new_shell", "node"))
-          raise ShopifyCli::AbortSilent
+          raise ShopifyCLI::AbortSilent
         end
 
         version, stat = @ctx.capture2e("node", "-v")
@@ -89,7 +122,7 @@ module Rails
           # execution stops above if not Windows
           @ctx.puts("{{x}} {{red:" + @ctx.message("rails.create.error.node_version_failure") + "}}")
           @ctx.puts(@ctx.message("rails.create.info.open_new_shell", "node"))
-          raise ShopifyCli::AbortSilent
+          raise ShopifyCLI::AbortSilent
         end
 
         @ctx.done(@ctx.message("rails.create.node_version", version))
@@ -101,7 +134,7 @@ module Rails
           @ctx.abort(@ctx.message("rails.create.error.yarn_required")) unless @ctx.windows?
           @ctx.puts("{{x}} {{red:" + @ctx.message("rails.create.error.yarn_required") + "}}")
           @ctx.puts(@ctx.message("rails.create.info.open_new_shell", "yarn"))
-          raise ShopifyCli::AbortSilent
+          raise ShopifyCLI::AbortSilent
         end
 
         version, stat = @ctx.capture2e("yarn", "-v")
@@ -109,7 +142,7 @@ module Rails
           @ctx.abort(@ctx.message("rails.create.error.yarn_version_failure")) unless @ctx.windows?
           @ctx.puts("{{x}} {{red:" + @ctx.message("rails.create.error.yarn_version_failure") + "}}")
           @ctx.puts(@ctx.message("rails.create.info.open_new_shell", "yarn"))
-          raise ShopifyCli::AbortSilent
+          raise ShopifyCLI::AbortSilent
         end
 
         @ctx.done(@ctx.message("rails.create.yarn_version", version))
@@ -173,10 +206,6 @@ module Rails
 
       def install_gem(name, version = nil)
         Gem.install(@ctx, name, version)
-      end
-
-      def local_debug?
-        @ctx.getenv(ShopifyCli::PartnersAPI::LOCAL_DEBUG)
       end
     end
   end

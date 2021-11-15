@@ -2,15 +2,15 @@ require "uri"
 
 module Node
   module Forms
-    class Create < ShopifyCli::Form
+    class Create < ShopifyCLI::Form
       attr_accessor :name
-      flag_arguments :title, :organization_id, :shop_domain, :type
+      flag_arguments :name, :organization_id, :shop_domain, :type
 
       def ask
-        self.title ||= CLI::UI::Prompt.ask(ctx.message("node.forms.create.app_name"))
+        self.name ||= CLI::UI::Prompt.ask(ctx.message("node.forms.create.app_name"))
         self.name = format_name
         self.type = ask_type
-        res = ShopifyCli::Tasks::SelectOrgAndShop.call(ctx, organization_id: organization_id, shop_domain: shop_domain)
+        res = ShopifyCLI::Tasks::SelectOrgAndShop.call(ctx, organization_id: organization_id, shop_domain: shop_domain)
         self.organization_id = res[:organization_id]
         self.shop_domain = res[:shop_domain]
       end
@@ -18,12 +18,12 @@ module Node
       private
 
       def format_name
-        name = title.downcase.split(" ").join("_")
+        formatted_name = name.downcase.split(" ").join("_")
 
-        if name.include?("shopify")
+        if formatted_name.include?("shopify")
           ctx.abort(ctx.message("node.forms.create.error.invalid_app_name"))
         end
-        name
+        formatted_name
       end
 
       def ask_type
@@ -34,7 +34,7 @@ module Node
           end
         end
 
-        unless ShopifyCli::Tasks::CreateApiClient::VALID_APP_TYPES.include?(type)
+        unless ShopifyCLI::Tasks::CreateApiClient::VALID_APP_TYPES.include?(type)
           ctx.abort(ctx.message("node.forms.create.error.invalid_app_type", type))
         end
         ctx.puts(ctx.message("node.forms.create.app_type.selected", type))

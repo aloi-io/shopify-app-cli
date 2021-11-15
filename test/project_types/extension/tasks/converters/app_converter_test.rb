@@ -7,11 +7,10 @@ module Extension
     module Converters
       class AppConverterTest < MiniTest::Test
         include TestHelpers::FakeUI
-        include ExtensionTestHelpers::Messages
 
         def setup
           super
-          ShopifyCli::ProjectType.load_type(:extension)
+          ShopifyCLI::ProjectType.load_type(:extension)
 
           @api_key = "fake_key"
           @secret = "fake_secret"

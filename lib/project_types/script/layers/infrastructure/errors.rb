@@ -4,49 +4,62 @@ module Script
   module Layers
     module Infrastructure
       module Errors
-        class AppNotInstalledError < ScriptProjectError; end
         class BuildError < ScriptProjectError; end
-        class ConfigUiSyntaxError < ScriptProjectError; end
+        class ScriptJsonSyntaxError < ScriptProjectError; end
 
-        class ConfigUiMissingKeysError < ScriptProjectError
-          attr_reader :filename, :missing_keys
-          def initialize(filename, missing_keys)
+        class ScriptJsonMissingKeysError < ScriptProjectError
+          attr_reader :missing_keys
+          def initialize(missing_keys)
             super()
-            @filename = filename
             @missing_keys = missing_keys
           end
         end
 
-        class ConfigUiInvalidInputModeError < ScriptProjectError
-          attr_reader :filename, :valid_input_modes
-          def initialize(filename, valid_input_modes)
+        class ScriptJsonInvalidValueError < ScriptProjectError
+          attr_reader :valid_input_modes
+          def initialize(valid_input_modes)
             super()
-            @filename = filename
             @valid_input_modes = valid_input_modes
           end
         end
 
-        class ConfigUiFieldsMissingKeysError < ScriptProjectError
-          attr_reader :filename, :missing_keys
-          def initialize(filename, missing_keys)
+        class ScriptJsonFieldsMissingKeysError < ScriptProjectError
+          attr_reader :missing_keys
+          def initialize(missing_keys)
             super()
-            @filename = filename
             @missing_keys = missing_keys
           end
         end
 
-        class ConfigUiFieldsInvalidTypeError < ScriptProjectError
-          attr_reader :filename, :valid_types
-          def initialize(filename, valid_types)
+        class ScriptJsonFieldsInvalidValueError < ScriptProjectError
+          attr_reader :valid_types
+          def initialize(valid_types)
             super()
-            @filename = filename
             @valid_types = valid_types
+          end
+        end
+
+        class APILibraryNotFoundError < ScriptProjectError
+          attr_reader :library_name
+          def initialize(library_name)
+            super()
+            @library_name = library_name
+          end
+        end
+
+        class LanguageLibraryForAPINotFoundError < ScriptProjectError
+          attr_reader :language, :api
+          def initialize(language:, api:)
+            super()
+            @language = language
+            @api = api
           end
         end
 
         class DependencyInstallError < ScriptProjectError; end
         class DeprecatedEPError < ScriptProjectError; end
         class EmptyResponseError < ScriptProjectError; end
+        class InvalidResponseError < ScriptProjectError; end
         class ForbiddenError < ScriptProjectError; end
         class InvalidContextError < ScriptProjectError; end
 
@@ -72,22 +85,21 @@ module Script
         class SystemCallFailureError < ScriptProjectError
           attr_reader :out, :cmd
           def initialize(out:, cmd:)
-            super()
+            super(out)
             @out = out
             @cmd = cmd
           end
         end
 
         class ScriptRepushError < ScriptProjectError
-          attr_reader :api_key
-          def initialize(api_key)
+          attr_reader :uuid
+          def initialize(uuid)
             super()
-            @api_key = api_key
+            @uuid = uuid
           end
         end
 
         class ScriptProjectAlreadyExistsError < ScriptProjectError; end
-        class ShopAuthenticationError < ScriptProjectError; end
         class TaskRunnerNotFoundError < ScriptProjectError; end
         class BuildScriptNotFoundError < ScriptProjectError; end
         class InvalidBuildScriptError < ScriptProjectError; end
@@ -97,6 +109,12 @@ module Script
             super("WebAssembly binary not found")
           end
         end
+
+        class InvalidProjectError < ScriptProjectError; end
+
+        class ScriptUploadError < ScriptProjectError; end
+        class ProjectConfigNotFoundError < ScriptProjectError; end
+        class InvalidProjectConfigError < ScriptProjectError; end
       end
     end
   end

@@ -26,7 +26,7 @@ describe Script::UI::ErrorHandler do
           $stderr.expects(:puts).with("\e[0;31m✗ Error\e[0m")
           $stderr.expects(:puts).with("\e[0m#{failed_op} #{cause_of_error} #{help_suggestion}")
         end
-        assert_raises(ShopifyCli::AbortSilent) do
+        assert_raises(ShopifyCLI::AbortSilent) do
           subject
         end
       end
@@ -42,7 +42,7 @@ describe Script::UI::ErrorHandler do
           $stderr.expects(:puts).with("\e[0;31m✗ Error\e[0m")
           $stderr.expects(:puts).with("\e[0m#{cause_of_error} #{help_suggestion}")
         end
-        assert_raises(ShopifyCli::AbortSilent) do
+        assert_raises(ShopifyCLI::AbortSilent) do
           subject
         end
       end
@@ -58,7 +58,7 @@ describe Script::UI::ErrorHandler do
           $stderr.expects(:puts).with("\e[0;31m✗ Error\e[0m")
           $stderr.expects(:puts).with("\e[0m#{failed_op} #{help_suggestion}")
         end
-        assert_raises(ShopifyCli::AbortSilent) do
+        assert_raises(ShopifyCLI::AbortSilent) do
           subject
         end
       end
@@ -74,7 +74,7 @@ describe Script::UI::ErrorHandler do
           $stderr.expects(:puts).with("\e[0;31m✗ Error\e[0m")
           $stderr.expects(:puts).with("\e[0m#{failed_op} #{cause_of_error}")
         end
-        assert_raises(ShopifyCli::AbortSilent) do
+        assert_raises(ShopifyCLI::AbortSilent) do
           subject
         end
       end
@@ -115,7 +115,7 @@ describe Script::UI::ErrorHandler do
       end
 
       describe "when Oauth::Error" do
-        let(:err) { ShopifyCli::OAuth::Error.new }
+        let(:err) { ShopifyCLI::IdentityAuth::Error.new }
         it "should call display_and_raise" do
           should_call_display_and_raise
         end
@@ -123,13 +123,6 @@ describe Script::UI::ErrorHandler do
 
       describe "when InvalidContextError" do
         let(:err) { Script::Layers::Infrastructure::Errors::InvalidContextError.new("") }
-        it "should call display_and_raise" do
-          should_call_display_and_raise
-        end
-      end
-
-      describe "when InvalidConfigProps" do
-        let(:err) { Script::Errors::InvalidConfigProps.new("") }
         it "should call display_and_raise" do
           should_call_display_and_raise
         end
@@ -156,13 +149,6 @@ describe Script::UI::ErrorHandler do
         end
       end
 
-      describe "when NoExistingStoresError" do
-        let(:err) { Script::Errors::NoExistingStoresError.new(1) }
-        it "should call display_and_raise" do
-          should_call_display_and_raise
-        end
-      end
-
       describe "when ScriptProjectAlreadyExistsError" do
         let(:err) { Script::Layers::Infrastructure::Errors::ScriptProjectAlreadyExistsError.new("/") }
         it "should call display_and_raise" do
@@ -184,15 +170,15 @@ describe Script::UI::ErrorHandler do
         end
       end
 
-      describe "when InvalidConfigUiDefinitionError" do
-        let(:err) { Script::Layers::Domain::Errors::InvalidConfigUiDefinitionError.new("filename") }
+      describe "when InvalidScriptJsonDefinitionError" do
+        let(:err) { Script::Layers::Domain::Errors::InvalidScriptJsonDefinitionError.new("filename") }
         it "should call display_and_raise" do
           should_call_display_and_raise
         end
       end
 
-      describe "when MissingSpecifiedConfigUiDefinitionError" do
-        let(:err) { Script::Layers::Domain::Errors::MissingSpecifiedConfigUiDefinitionError.new("filename") }
+      describe "when NoScriptJsonFile" do
+        let(:err) { Script::Layers::Domain::Errors::NoScriptJsonFile.new("filename") }
         it "should call display_and_raise" do
           should_call_display_and_raise
         end
@@ -203,17 +189,17 @@ describe Script::UI::ErrorHandler do
         it "should call display_and_raise" do
           should_call_display_and_raise
         end
+
+        it "should not display deprecated or beta APIs" do
+          expected_types = %w(payment_methods shipping_methods)
+          Script::Layers::Application::ExtensionPoints.expects(:available_types).returns(expected_types)
+          io = capture_io_and_assert_raises(ShopifyCLI::AbortSilent) { subject }
+          assert_match(expected_types.join(", "), io.join)
+        end
       end
 
       describe "when ScriptNotFoundError" do
         let(:err) { Script::Layers::Domain::Errors::ScriptNotFoundError.new("ep type", "name") }
-        it "should call display_and_raise" do
-          should_call_display_and_raise
-        end
-      end
-
-      describe "when AppNotInstalledError" do
-        let(:err) { Script::Layers::Infrastructure::Errors::AppNotInstalledError.new }
         it "should call display_and_raise" do
           should_call_display_and_raise
         end
@@ -226,36 +212,36 @@ describe Script::UI::ErrorHandler do
         end
       end
 
-      describe "when ConfigUiSyntaxError" do
-        let(:err) { Script::Layers::Infrastructure::Errors::ConfigUiSyntaxError.new }
+      describe "when ScriptJsonSyntaxError" do
+        let(:err) { Script::Layers::Infrastructure::Errors::ScriptJsonSyntaxError.new }
         it "should call display_and_raise" do
           should_call_display_and_raise
         end
       end
 
-      describe "when ConfigUiMissingKeysError" do
-        let(:err) { Script::Layers::Infrastructure::Errors::ConfigUiMissingKeysError.new("file", "keys") }
+      describe "when ScriptJsonMissingKeysError" do
+        let(:err) { Script::Layers::Infrastructure::Errors::ScriptJsonMissingKeysError.new("keys") }
         it "should call display_and_raise" do
           should_call_display_and_raise
         end
       end
 
-      describe "when ConfigUiInvalidInputModeError" do
-        let(:err) { Script::Layers::Infrastructure::Errors::ConfigUiInvalidInputModeError.new("file", "input modes") }
+      describe "when ScriptJsonInvalidValueError" do
+        let(:err) { Script::Layers::Infrastructure::Errors::ScriptJsonInvalidValueError.new("input modes") }
         it "should call display_and_raise" do
           should_call_display_and_raise
         end
       end
 
-      describe "when ConfigUiFieldsMissingKeysError" do
-        let(:err) { Script::Layers::Infrastructure::Errors::ConfigUiFieldsMissingKeysError.new("file", "keys") }
+      describe "when ScriptJsonFieldsMissingKeysError" do
+        let(:err) { Script::Layers::Infrastructure::Errors::ScriptJsonFieldsMissingKeysError.new("keys") }
         it "should call display_and_raise" do
           should_call_display_and_raise
         end
       end
 
-      describe "when ConfigUiFieldsInvalidTypeError" do
-        let(:err) { Script::Layers::Infrastructure::Errors::ConfigUiFieldsInvalidTypeError.new("file", "types") }
+      describe "when ScriptJsonFieldsInvalidValueError" do
+        let(:err) { Script::Layers::Infrastructure::Errors::ScriptJsonFieldsInvalidValueError.new("types") }
         it "should call display_and_raise" do
           should_call_display_and_raise
         end
@@ -290,14 +276,7 @@ describe Script::UI::ErrorHandler do
       end
 
       describe "when ScriptRepushError" do
-        let(:err) { Script::Layers::Infrastructure::Errors::ScriptRepushError.new("api_key") }
-        it "should call display_and_raise" do
-          should_call_display_and_raise
-        end
-      end
-
-      describe "when ShopAuthenticationError" do
-        let(:err) { Script::Layers::Infrastructure::Errors::ShopAuthenticationError.new }
+        let(:err) { Script::Layers::Infrastructure::Errors::ScriptRepushError.new("uuid") }
         it "should call display_and_raise" do
           should_call_display_and_raise
         end

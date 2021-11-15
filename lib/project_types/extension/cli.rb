@@ -1,18 +1,10 @@
 # frozen_string_literal: true
 
 module Extension
-  class PackageNotFound < RuntimeError; end
+  class PackageResolutionFailed < RuntimeError; end
 
-  class Project < ShopifyCli::ProjectType
+  class Project < ShopifyCLI::ProjectType
     hidden_feature
-    title("App Extension")
-    creator("Extension::Commands::Create")
-
-    register_command("Extension::Commands::Build", "build")
-    register_command("Extension::Commands::Register", "register")
-    register_command("Extension::Commands::Push", "push")
-    register_command("Extension::Commands::Serve", "serve")
-    register_command("Extension::Commands::Tunnel", "tunnel")
 
     require Project.project_filepath("messages/messages")
     require Project.project_filepath("messages/message_loading")
@@ -20,15 +12,21 @@ module Extension
     register_messages(Extension::Messages::MessageLoading.load)
   end
 
-  module Commands
+  class Command < ShopifyCLI::Command::ProjectCommand
+    hidden_feature
     autoload :ExtensionCommand, Project.project_filepath("commands/extension_command")
-    autoload :Create, Project.project_filepath("commands/create")
-    autoload :Register, Project.project_filepath("commands/register")
-    autoload :Build, Project.project_filepath("commands/build")
-    autoload :Serve, Project.project_filepath("commands/serve")
-    autoload :Push, Project.project_filepath("commands/push")
-    autoload :Tunnel, Project.project_filepath("commands/tunnel")
+
+    subcommand :Create, "create", Project.project_filepath("commands/create")
+    subcommand :Register, "register", Project.project_filepath("commands/register")
+    subcommand :Info, "info", Project.project_filepath("commands/info")
+    subcommand :Connect, "connect", Project.project_filepath("commands/connect")
+    subcommand :Build, "build", Project.project_filepath("commands/build")
+    subcommand :Serve, "serve", Project.project_filepath("commands/serve")
+    subcommand :Push, "push", Project.project_filepath("commands/push")
+    subcommand :Tunnel, "tunnel", Project.project_filepath("commands/tunnel")
+    subcommand :Check, "check", Project.project_filepath("commands/check")
   end
+  ShopifyCLI::Commands.register("Extension::Command", "extension")
 
   module Tasks
     autoload :UserErrors, Project.project_filepath("tasks/user_errors")
@@ -38,12 +36,23 @@ module Extension
     autoload :UpdateDraft, Project.project_filepath("tasks/update_draft")
     autoload :FetchSpecifications, Project.project_filepath("tasks/fetch_specifications")
     autoload :ConfigureFeatures, Project.project_filepath("tasks/configure_features")
+    autoload :ConfigureOptions, Project.project_filepath("tasks/configure_options")
+    autoload :ChooseNextAvailablePort, Project.project_filepath("tasks/choose_next_available_port")
+    autoload :FindNpmPackages, Project.project_filepath("tasks/find_npm_packages")
+    autoload :GetExtensions, Project.project_filepath("tasks/get_extensions")
+    autoload :GetProduct, Project.project_filepath("tasks/get_product")
+    autoload :RunExtensionCommand, Project.project_filepath("tasks/run_extension_command")
+    autoload :MergeServerConfig, Project.project_filepath("tasks/merge_server_config")
+    autoload :FindPackageFromJson, Project.project_filepath("tasks/find_package_from_json.rb")
+    autoload :EnsureResourceUrl, Project.project_filepath("tasks/ensure_resource_url.rb")
+    autoload :ConvertServerConfig, Project.project_filepath("tasks/convert_server_config")
 
     module Converters
       autoload :RegistrationConverter, Project.project_filepath("tasks/converters/registration_converter")
       autoload :VersionConverter, Project.project_filepath("tasks/converters/version_converter")
       autoload :ValidationErrorConverter, Project.project_filepath("tasks/converters/validation_error_converter")
       autoload :AppConverter, Project.project_filepath("tasks/converters/app_converter")
+      autoload :ProductConverter, Project.project_filepath("tasks/converters/product_converter")
     end
   end
 
@@ -51,27 +60,49 @@ module Extension
     module Questions
       autoload :AskApp, Project.project_filepath("forms/questions/ask_app")
       autoload :AskName, Project.project_filepath("forms/questions/ask_name")
+      autoload :AskTemplate, Project.project_filepath("forms/questions/ask_template")
       autoload :AskType, Project.project_filepath("forms/questions/ask_type")
+      autoload :AskRegistration, Project.project_filepath("forms/questions/ask_registration")
     end
 
     autoload :Create, Project.project_filepath("forms/create")
     autoload :Register, Project.project_filepath("forms/register")
+    autoload :Connect, Project.project_filepath("forms/connect")
   end
 
   module Features
-    autoload :ArgoRendererPackage, Project.project_filepath("features/argo_renderer_package")
+    module Runtimes
+      autoload :Admin, Project.project_filepath("features/runtimes/admin")
+      autoload :Base, Project.project_filepath("features/runtimes/base")
+      autoload :CheckoutPostPurchase, Project.project_filepath("features/runtimes/checkout_post_purchase")
+      autoload :CheckoutUiExtension, Project.project_filepath("features/runtimes/checkout_ui_extension")
+    end
     autoload :ArgoServe, Project.project_filepath("features/argo_serve")
+    autoload :ArgoServeOptions, Project.project_filepath("features/argo_serve_options")
     autoload :ArgoSetup, Project.project_filepath("features/argo_setup")
     autoload :ArgoSetupStep, Project.project_filepath("features/argo_setup_step")
     autoload :ArgoSetupSteps, Project.project_filepath("features/argo_setup_steps")
     autoload :ArgoDependencies, Project.project_filepath("features/argo_dependencies")
     autoload :ArgoConfig, Project.project_filepath("features/argo_config")
+    autoload :ArgoRuntime, Project.project_filepath("features/argo_runtime")
     autoload :Argo, Project.project_filepath("features/argo")
   end
 
   module Models
     module SpecificationHandlers
       autoload :Default, Project.project_filepath("models/specification_handlers/default")
+    end
+
+    module ServerConfig
+      autoload :Base, Project.project_filepath("models/server_config/base")
+      autoload :App, Project.project_filepath("models/server_config/app")
+      autoload :Development, Project.project_filepath("models/server_config/development")
+      autoload :DevelopmentEntries, Project.project_filepath("models/server_config/development_entries")
+      autoload :DevelopmentRenderer, Project.project_filepath("models/server_config/development_renderer")
+      autoload :DevelopmentResource, Project.project_filepath("models/server_config/development_resource")
+      autoload :Extension, Project.project_filepath("models/server_config/extension")
+      autoload :Root, Project.project_filepath("models/server_config/root")
+      autoload :User, Project.project_filepath("models/server_config/user")
     end
 
     autoload :App, Project.project_filepath("models/app")
@@ -81,8 +112,13 @@ module Extension
     autoload :Specification, Project.project_filepath("models/specification")
     autoload :Specifications, Project.project_filepath("models/specifications")
     autoload :LazySpecificationHandler, Project.project_filepath("models/lazy_specification_handler")
+    autoload :NpmPackage, Project.project_filepath("models/npm_package")
+    autoload :Product, Project.project_filepath("models/product")
+    autoload :DevelopmentServer, Project.project_filepath("models/development_server")
+    autoload :DevelopmentServerRequirements, Project.project_filepath("models/development_server_requirements")
   end
 
   autoload :ExtensionProjectKeys, Project.project_filepath("extension_project_keys")
   autoload :ExtensionProject, Project.project_filepath("extension_project")
+  autoload :Errors, Project.project_filepath("errors")
 end

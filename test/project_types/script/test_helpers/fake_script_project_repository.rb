@@ -6,20 +6,16 @@ module TestHelpers
       @project = nil
     end
 
-    def create(script_name:, extension_point_type:, language:, no_config_ui:, env: nil)
-      config_ui_file = if no_config_ui
-        nil
-      else
-        FakeConfigUiRepository.new.create("config-ui.yml", "---\nversion: 1")
-      end
+    def create(script_name:, extension_point_type:, language:, env: nil)
+      script_json = fake_script_json_repo.create({ version: 1, title: script_name }.to_json)
 
       @project = Script::Layers::Domain::ScriptProject.new(
         id: "/#{script_name}",
-        env: env || ShopifyCli::Resources::EnvFile.new(api_key: "1234", secret: "shh", extra: {}),
+        env: env || ShopifyCLI::Resources::EnvFile.new(api_key: "1234", secret: "shh", extra: {}),
         script_name: script_name,
         extension_point_type: extension_point_type,
         language: language,
-        config_ui: config_ui_file
+        script_json: script_json
       )
     end
 
@@ -36,24 +32,46 @@ module TestHelpers
     end
 
     def create_env(api_key:, secret:, uuid:)
-      @project.env = ShopifyCli::Resources::EnvFile.new(api_key: api_key, secret: secret, extra: { "UUID" => uuid })
+      @project.env = ShopifyCLI::Resources::EnvFile.new(api_key: api_key, secret: secret, extra: { "UUID" => uuid })
       @project
     end
 
-    class FakeConfigUiRepository
+    def update_or_create_script_json(title:)
+      script_json = fake_script_json_repo
+        .update_or_create(title: title)
+
+      @project.script_json = script_json
+      @project
+    end
+
+    private
+
+    def fake_script_json_repo
+      @fake_script_json_repo ||= FakeScriptJsonRepository.new
+    end
+
+    class FakeScriptJsonRepository
       def initialize
-        @cache = {}
+        @cache = nil
       end
 
-      def create(filename, content)
-        @cache[filename] = Script::Layers::Domain::ConfigUi.new(
-          filename: filename,
-          content: content,
+      def create(content)
+        @cache = Script::Layers::Domain::ScriptJson.new(
+          content: JSON.parse(content),
         )
       end
 
-      def get(filename)
-        @cache[filename]
+      def update_or_create(title:)
+        json = @cache&.content || {}
+        json["title"] = title
+
+        @cache = Script::Layers::Domain::ScriptJson.new(
+          content: json,
+        )
+      end
+
+      def get
+        @cache
       end
     end
   end

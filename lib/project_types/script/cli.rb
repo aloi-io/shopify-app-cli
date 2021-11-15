@@ -1,22 +1,20 @@
 # frozen_string_literal: true
 
 module Script
-  class Project < ShopifyCli::ProjectType
+  class Project < ShopifyCLI::ProjectType
     hidden_feature(feature_set: :script_project)
-    title("Script")
-    creator("Script::Commands::Create")
-
-    register_command("Script::Commands::Push", "push")
 
     require Project.project_filepath("messages/messages")
     register_messages(Script::Messages::MESSAGES)
   end
 
   # define/autoload project specific Commands
-  module Commands
-    autoload :Create, Project.project_filepath("commands/create")
-    autoload :Push, Project.project_filepath("commands/push")
+  class Command < ShopifyCLI::Command::ProjectCommand
+    hidden_feature(feature_set: :script_project)
+    subcommand :Create, "create", Project.project_filepath("commands/create")
+    subcommand :Push, "push", Project.project_filepath("commands/push")
   end
+  ShopifyCLI::Commands.register("Script::Command", "script")
 
   # define/autoload project specific Forms
   module Forms
@@ -39,32 +37,42 @@ module Script
 
     module Domain
       autoload :Errors, Project.project_filepath("layers/domain/errors")
-      autoload :ConfigUi, Project.project_filepath("layers/domain/config_ui")
       autoload :PushPackage, Project.project_filepath("layers/domain/push_package")
       autoload :Metadata, Project.project_filepath("layers/domain/metadata")
       autoload :ExtensionPoint, Project.project_filepath("layers/domain/extension_point")
+      autoload :ScriptJson, Project.project_filepath("layers/domain/script_json")
       autoload :ScriptProject, Project.project_filepath("layers/domain/script_project")
     end
 
     module Infrastructure
       autoload :Errors, Project.project_filepath("layers/infrastructure/errors")
-      autoload :AssemblyScriptDependencyManager,
-        Project.project_filepath("layers/infrastructure/assemblyscript_dependency_manager")
-      autoload :AssemblyScriptProjectCreator,
-        Project.project_filepath("layers/infrastructure/assemblyscript_project_creator")
-      autoload :AssemblyScriptTaskRunner, Project.project_filepath("layers/infrastructure/assemblyscript_task_runner")
-      autoload :AssemblyScriptTsConfig, Project.project_filepath("layers/infrastructure/assemblyscript_tsconfig")
       autoload :CommandRunner, Project.project_filepath("layers/infrastructure/command_runner")
-      autoload :RustProjectCreator,
-        Project.project_filepath("layers/infrastructure/rust_project_creator.rb")
-      autoload :RustTaskRunner, Project.project_filepath("layers/infrastructure/rust_task_runner")
-
       autoload :PushPackageRepository, Project.project_filepath("layers/infrastructure/push_package_repository")
       autoload :ExtensionPointRepository, Project.project_filepath("layers/infrastructure/extension_point_repository")
-      autoload :ProjectCreator, Project.project_filepath("layers/infrastructure/project_creator")
       autoload :ScriptProjectRepository, Project.project_filepath("layers/infrastructure/script_project_repository")
       autoload :ScriptService, Project.project_filepath("layers/infrastructure/script_service")
-      autoload :TaskRunner, Project.project_filepath("layers/infrastructure/task_runner")
+      autoload :ScriptUploader, Project.project_filepath("layers/infrastructure/script_uploader")
+      autoload :ServiceLocator, Project.project_filepath("layers/infrastructure/service_locator")
+
+      module Languages
+        autoload :AssemblyScriptProjectCreator,
+          Project.project_filepath("layers/infrastructure/languages/assemblyscript_project_creator")
+        autoload :AssemblyScriptTaskRunner,
+          Project.project_filepath("layers/infrastructure/languages/assemblyscript_task_runner")
+        autoload :ProjectCreator, Project.project_filepath("layers/infrastructure/languages/project_creator")
+        autoload :TaskRunner, Project.project_filepath("layers/infrastructure/languages/task_runner")
+        autoload :TypeScriptProjectCreator,
+          Project.project_filepath("layers/infrastructure/languages/typescript_project_creator.rb")
+        autoload :TypeScriptTaskRunner,
+          Project.project_filepath("layers/infrastructure/languages/typescript_task_runner.rb")
+      end
+
+      module ApiClients
+        autoload :PartnersProxyApiClient,
+          Project.project_filepath("layers/infrastructure/api_clients/partners_proxy_api_client")
+        autoload :ScriptServiceApiClient,
+          Project.project_filepath("layers/infrastructure/api_clients/script_service_api_client")
+      end
     end
   end
 

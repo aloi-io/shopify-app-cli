@@ -1,4 +1,3 @@
-
 require "test_helper"
 require "project_types/extension/extension_test_helpers"
 
@@ -8,12 +7,11 @@ module Extension
       include TestHelpers
       include TestHelpers::FakeUI
       include TestHelpers::Partners
-      include ExtensionTestHelpers::Messages
       include ExtensionTestHelpers::Stubs::FetchSpecifications
 
       def setup
         super
-        ShopifyCli::ProjectType.load_type(:extension)
+        ShopifyCLI::ProjectType.load_type(:extension)
       end
 
       def test_request

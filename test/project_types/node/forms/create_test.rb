@@ -8,28 +8,24 @@ module Node
 
       def setup
         super
-        stub_shopify_org_confirmation
-        ShopifyCli::Shopifolk.stubs(:check)
-        ShopifyCli::ProjectType.load_type(:node)
+        ShopifyCLI::ProjectType.load_type(:node)
       end
 
       def test_returns_all_defined_attributes_if_valid
         form = ask
         assert_equal("test_app", form.name)
-        assert_equal("Test App", form.title)
         assert_equal(42, form.organization_id)
         assert_equal("shop.myshopify.com", form.shop_domain)
       end
 
       def test_title_can_be_provided_by_flag
-        form = ask(title: "My New App")
+        form = ask(name: "My New App")
         assert_equal("my_new_app", form.name)
-        assert_equal("My New App", form.title)
       end
 
       def test_aborts_if_title_includes_shopify
         io = capture_io do
-          form = ask(title: "Shopify")
+          form = ask(name: "Shopify")
           assert_nil(form)
         end
         assert_match(@context.message("node.forms.create.error.invalid_app_name"), io.join)
@@ -144,7 +140,6 @@ module Node
           form = ask(org_id: nil, shop: nil)
           assert_nil(form)
         end
-        assert_match(@context.message("core.tasks.select_org_and_shop.error.partners_notice"), io.join)
         assert_match(@context.message("core.tasks.select_org_and_shop.error.no_organizations"), io.join)
       end
 
@@ -230,11 +225,11 @@ module Node
 
       private
 
-      def ask(title: "Test App", org_id: 42, shop: "shop.myshopify.com", type: "custom")
+      def ask(name: "Test App", org_id: 42, shop: "shop.myshopify.com", type: "custom")
         Create.ask(
           @context,
           [],
-          title: title,
+          name: name,
           type: type,
           organization_id: org_id,
           shop_domain: shop,

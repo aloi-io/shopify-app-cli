@@ -14,41 +14,44 @@ describe Script::Tasks::EnsureEnv do
     let(:script_project_repository) { TestHelpers::FakeScriptProjectRepository.new }
 
     subject do
-      Script::Tasks::EnsureEnv.call(context)
+      result = nil
+      capture_io { result = Script::Tasks::EnsureEnv.call(context) }
+      result
     end
 
     before do
       context.output_captured = true
-      ShopifyCli::Shopifolk.stubs(:check).returns(is_shopifolk)
+      ShopifyCLI::Shopifolk.stubs(:check).returns(is_shopifolk)
+      ShopifyCLI::Shopifolk.stubs(:acting_as_shopify_organization?).returns(false)
       Script::Layers::Infrastructure::ScriptProjectRepository.stubs(:new).returns(script_project_repository)
       script_project_repository.create(
         language: language,
         extension_point_type: extension_point_type,
         script_name: script_name,
-        no_config_ui: false,
         env: env
       )
     end
 
     describe "when env already has all required fields" do
-      let(:env) { ShopifyCli::Resources::EnvFile.new(api_key: "api_key", secret: "shh", extra: { "UUID" => "uuid" }) }
+      let(:env) { ShopifyCLI::Resources::EnvFile.new(api_key: "api_key", secret: "shh", extra: { "UUID" => "uuid" }) }
 
       it "does nothing" do
         CLI::UI::Prompt.expects(:ask).never
         CLI::UI::Prompt.expects(:confirm).never
-        ShopifyCli::PartnersAPI.expects(:query).never
+        ShopifyCLI::PartnersAPI.expects(:query).never
         Script::Layers::Infrastructure::ScriptService.any_instance.expects(:get_app_scripts).never
 
-        assert_nil subject
+        refute subject
       end
     end
 
     describe "when env is not yet valid" do
-      def new_app(title, api_key, secret)
+      def new_app(title, api_key, secret, app_type = "custom")
         {
           "title" => title,
           "apiKey" => api_key,
           "apiSecretKeys" => [{ "secret" => secret }],
+          "appType" => app_type,
         }
       end
 
@@ -60,13 +63,16 @@ describe Script::Tasks::EnsureEnv do
       end
 
       def expect_new_env
-        assert_equal selected_api_key, subject.env.api_key
-        assert_equal selected_secret, subject.env.secret
+        assert subject
+
+        project = script_project_repository.get
+        assert_equal selected_api_key, project.env.api_key
+        assert_equal selected_secret, project.env.secret
 
         if selected_uuid.nil?
-          assert_nil subject.env.extra["UUID"]
+          assert_nil project.env.extra["UUID"]
         else
-          assert_equal selected_uuid, subject.env.extra["UUID"]
+          assert_equal selected_uuid, project.env.extra["UUID"]
         end
       end
 
@@ -85,13 +91,13 @@ describe Script::Tasks::EnsureEnv do
         let(:selected_uuid) { nil }
 
         before do
-          ShopifyCli::PartnersAPI::Organizations
+          ShopifyCLI::PartnersAPI::Organizations
             .stubs(:fetch_with_app)
             .returns(orgs_with_apps)
           Script::Layers::Infrastructure::ScriptService
             .any_instance
             .stubs(:get_app_scripts)
-            .with(api_key: selected_api_key, extension_point_type: extension_point_type)
+            .with(extension_point_type: extension_point_type)
             .returns(existing_scripts)
         end
 
@@ -105,13 +111,21 @@ describe Script::Tasks::EnsureEnv do
           end
 
           describe("when number of orgs == 1") do
-            let(:orgs) { [new_org(1, "business1")] }
+            let(:org_id) { 1 }
+            let(:org_name) { "business1" }
+            let(:orgs) { [new_org(org_id, org_name)] }
             let(:selected_org) { orgs_with_apps.first }
 
             it("selects the org by default") do
-              assert_equal selected_api_key, subject.env.api_key
-              assert_equal selected_secret, subject.env.secret
-              assert_nil subject.env.extra["UUID"]
+              selected_org_msg = context.message("script.application.ensure_env.organization", org_name, org_id)
+              context.expects(:puts).with(selected_org_msg)
+              context.stubs(:puts).with(Not(equals(selected_org_msg)))
+
+              assert subject
+              project = script_project_repository.get
+              assert_equal selected_api_key, project.env.api_key
+              assert_equal selected_secret, project.env.secret
+              assert_nil project.env.extra["UUID"]
             end
           end
 
@@ -130,6 +144,19 @@ describe Script::Tasks::EnsureEnv do
           end
         end
 
+        describe("when the partners bypass flag is set") do
+          before do
+            Script::Tasks::EnsureEnv.any_instance.stubs(:partner_proxy_bypass).returns(true)
+          end
+
+          it("should not call partners to query for apps") do
+            ShopifyCLI::PartnersAPI.expects(:query).never
+            Script::Layers::Infrastructure::ScriptService.any_instance.expects(:get_app_scripts).returns([])
+
+            subject
+          end
+        end
+
         describe("when asking app connection") do
           describe("when number of apps == 0") do
             let(:apps) { [] }
@@ -139,12 +166,25 @@ describe Script::Tasks::EnsureEnv do
             end
           end
 
+          describe("when there is 1 public app") do
+            let(:apps) { new_app("app1", "1", "1", "public") }
+
+            it("raises NoExistingAppsError") do
+              assert_raises(Script::Errors::NoExistingAppsError) { subject }
+            end
+          end
+
           describe("when number of apps == 1") do
+            let(:app_title) { "app1" }
             let(:apps) { [new_app("app1", selected_api_key, selected_secret)] }
             let(:selected_api_key) { "selected_api_key" }
             let(:selected_secret) { "selected_secret" }
 
             it("selects the app by default") do
+              selected_app_msg = context.message("script.application.ensure_env.app", app_title)
+              context.expects(:puts).with(selected_app_msg)
+              context.stubs(:puts).with(Not(equals(selected_app_msg)))
+
               expect_new_env
             end
           end
@@ -224,7 +264,7 @@ describe Script::Tasks::EnsureEnv do
       end
 
       describe "when missing uuid" do
-        let(:env) { ShopifyCli::Resources::EnvFile.new(api_key: "api_key", secret: "shh") }
+        let(:env) { ShopifyCLI::Resources::EnvFile.new(api_key: "api_key", secret: "shh") }
 
         it_prompts_user_and_update_env
       end

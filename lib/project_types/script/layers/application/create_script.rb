@@ -7,21 +7,36 @@ module Script
     module Application
       class CreateScript
         class << self
-          def call(ctx:, language:, script_name:, extension_point_type:, no_config_ui:)
+          def call(ctx:, language:, sparse_checkout_branch:, script_name:, extension_point_type:)
             raise Infrastructure::Errors::ScriptProjectAlreadyExistsError, script_name if ctx.dir_exist?(script_name)
 
             in_new_directory_context(ctx, script_name) do
               extension_point = ExtensionPoints.get(type: extension_point_type)
-              project = Infrastructure::ScriptProjectRepository.new(ctx: ctx).create(
+              script_project_repo = Infrastructure::ScriptProjectRepository.new(ctx: ctx)
+              project = script_project_repo.create(
                 script_name: script_name,
                 extension_point_type: extension_point_type,
-                language: language,
-                no_config_ui: no_config_ui
+                language: language
               )
-              project_creator = Infrastructure::ProjectCreator
-                .for(ctx, language, extension_point, script_name, project.id)
+
+              # remove the need to pass the whole extension-point object to the infra layer
+              sparse_checkout_repo = extension_point.libraries.for(language).repo
+              type = extension_point.dasherize_type
+              domain = extension_point.domain
+
+              project_creator = Infrastructure::Languages::ProjectCreator.for(
+                ctx: ctx,
+                language: language,
+                type: type,
+                project_name: script_name,
+                path_to_project: project.id,
+                sparse_checkout_repo: sparse_checkout_repo,
+                sparse_checkout_branch: sparse_checkout_branch,
+                sparse_checkout_set_path: "#{domain}/#{language}/#{type}/default"
+              )
+
               install_dependencies(ctx, language, script_name, project_creator)
-              bootstrap(ctx, project_creator)
+              script_project_repo.update_or_create_script_json(title: script_name)
               project
             end
           end
@@ -29,16 +44,22 @@ module Script
           private
 
           def install_dependencies(ctx, language, script_name, project_creator)
-            task_runner = Infrastructure::TaskRunner.for(ctx, language, script_name)
-            project_creator.setup_dependencies
-            ProjectDependencies.install(ctx: ctx, task_runner: task_runner)
-          end
-
-          def bootstrap(ctx, project_creator)
-            UI::StrictSpinner.spin(ctx.message("script.create.creating")) do |spinner|
-              project_creator.bootstrap
-              spinner.update_title(ctx.message("script.create.created"))
+            task_runner = Infrastructure::Languages::TaskRunner.for(ctx, language, script_name)
+            CLI::UI::Frame.open(ctx.message(
+              "core.git.pulling_from_to",
+              project_creator.sparse_checkout_repo,
+              script_name,
+            )) do
+              UI::StrictSpinner.spin(ctx.message(
+                "core.git.pulling",
+                project_creator.sparse_checkout_repo,
+                script_name,
+              )) do |spinner|
+                project_creator.setup_dependencies
+                spinner.update_title(ctx.message("core.git.pulled", script_name))
+              end
             end
+            ProjectDependencies.install(ctx: ctx, task_runner: task_runner)
           end
 
           def in_new_directory_context(ctx, directory)

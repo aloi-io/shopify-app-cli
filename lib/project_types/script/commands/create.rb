@@ -1,14 +1,17 @@
 # frozen_string_literal: true
 
 module Script
-  module Commands
-    class Create < ShopifyCli::SubCommand
+  class Command
+    class Create < ShopifyCLI::Command::SubCommand
+      unless ShopifyCLI::Environment.acceptance_test?
+        prerequisite_task :ensure_authenticated
+      end
+
       options do |parser, flags|
         parser.on("--name=NAME") { |name| flags[:name] = name }
-        parser.on("--extension_point=EP_NAME") { |ep_name| flags[:extension_point] = ep_name }
-        parser.on("--extension-point=EP_NAME") { |ep_name| flags[:extension_point] = ep_name }
+        parser.on("--api=API_NAME") { |ep_name| flags[:extension_point] = ep_name }
         parser.on("--language=LANGUAGE") { |language| flags[:language] = language }
-        parser.on("--no-config-ui") { |no_config_ui| flags[:no_config_ui] = no_config_ui }
+        parser.on("--branch=BRANCH") { |branch| flags[:branch] = branch }
       end
 
       def call(args, _name)
@@ -22,9 +25,9 @@ module Script
         project = Layers::Application::CreateScript.call(
           ctx: @ctx,
           language: form.language,
+          sparse_checkout_branch: options.flags[:branch] || "master",
           script_name: form.name,
           extension_point_type: form.extension_point,
-          no_config_ui: options.flags.key?(:no_config_ui)
         )
         @ctx.puts(@ctx.message("script.create.change_directory_notice", project.script_name))
       rescue StandardError => e
@@ -32,8 +35,8 @@ module Script
       end
 
       def self.help
-        allowed_values = Script::Layers::Application::ExtensionPoints.types.map { |type| "{{cyan:#{type}}}" }
-        ShopifyCli::Context.message("script.create.help", ShopifyCli::TOOL_NAME, allowed_values.join(", "))
+        allowed_values = Script::Layers::Application::ExtensionPoints.available_types.map { |type| "{{cyan:#{type}}}" }
+        ShopifyCLI::Context.message("script.create.help", ShopifyCLI::TOOL_NAME, allowed_values.join(", "))
       end
     end
   end

@@ -1,46 +1,35 @@
-# [Shopify App CLI](https://shopify.dev/tools/cli)
+<div align="center">
+  <img src="assets/logo.png" width="150"/>
+  <h1>Shopify CLI</h1>
+  <a href=""><img src="https://github.com/shopify/shopify-cli/workflows/CI/badge.svg" alt="Shopify"></a>
+  <img src="https://img.shields.io/github/v/release/shopify/shopify-cli?include_prereleases&style=flat-square" alt="Latest Version">
+  <img src="https://img.shields.io/github/forks/shopify/shopify-cli?style=flat-square" alt="GitHub forks">
+  <img src="https://img.shields.io/github/stars/shopify/shopify-cli?style=flat-square" alt="GitHub stars">
+  <img src="https://img.shields.io/github/commit-activity/w/shopify/shopify-cli?style=flat-square" alt="Commit Activity">
+    <img src="https://img.shields.io/github/contributors/shopify/shopify-cli?style=flat-square" alt="Contributors">
+  <img src="https://img.shields.io/github/commits-since/shopify/shopify-cli/latest?style=flat-square" alt="Latest Commits">
+  <a href="http://twitter.com/ShopifyDevs"><img src="https://img.shields.io/twitter/follow/ShopifyDevs?style=flat-square" alt="Twitter Followers"></a>
+  <img src="https://img.shields.io/badge/License-MIT-green.svg" alt="License">
+  <img src="https://img.shields.io/badge/Powered%20by-Ruby-red" alt="Powered by Ruby">
+</div>
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE.md)
-[![Build Status](https://github.com/Shopify/shopify-app-cli/workflows/CI/badge.svg)](https://github.com/Shopify/shopify-app-cli/actions)
 
-Shopify App CLI helps you build Shopify apps faster. It quickly generates Node.js and Ruby on Rails apps and automates many common development tasks.
+Shopify CLI helps you build Shopify themes and apps. Use Shopify CLI to automate and enhance your local development workflow.
 
-## Features
+Shopify CLI is available as a gem and can be run and installed on Mac, Linux and Windows systems.
 
-Shopify App CLI helps your app development process in the following ways:
+## Installation 
 
-- Creates an app in the [Partner dashboard](https://partners.shopify.com/current/resources)
-- Populates test data for your app, including products, customers, and draft orders
-- Generates new [webhooks](https://shopify.dev/tutorials/manage-webhooks) for your app
-- Deploys your app to an external platform, such as [Heroku](https://www.heroku.com/)
+Check out our [installation steps](docs/users/installation.md).
 
-## Installation
+## Contributing 👩‍💻
 
-Refer to [*Install Shopify App CLI*](https://shopify.dev/tools/cli/installation) to learn how to install Shopify App CLI on Windows, macOS, or Linux.
+Shopify CLI is an [open source tool](/LICENSE) and everyone is welcome to help the community by [contributing](/docs/README.md) to the project.
 
-## Getting started
+## Help 🖐
 
-Refer to [*Getting started with Shopify App CLI*](https://shopify.dev/tools/cli/getting-started) to learn how to create and manage different types of projects with Shopify App CLI.
+If you encounter issues using the CLI or have feedback you'd like to share with us, below are some options:
 
-## References
+- [Open a GitHub issue](https://github.com/Shopify/shopify-cli/issues) - To report bugs or request new features, open an issue in the Shopify CLI repository.
 
-- **[Shopify App CLI core commands](https://shopify.dev/tools/cli/reference)** - A complete reference of core commands for Shopify App CLI.
-- **[Node.js app commands](https://shopify.dev/tools/cli/reference/node-app)** - A complete Shopify App CLI command reference for Node.js apps.
-- **[Ruby on Rails app commands](https://shopify.dev/tools/cli/reference/ruby-on-rails-app)** - A complete Shopify App CLI command reference for Ruby on Rails apps.
-
-## Troubleshooting
-
-Refer to [*Troubleshooting Shopify App CLI*](https://shopify.dev/tools/cli/troubleshooting) to learn how to upgrade, migrate from a legacy version, and uninstall Shopify App CLI.
-
-## Contributing to Shopify App CLI
-
-Shopify App CLI is an [open source](https://github.com/Shopify/shopify-app-cli/blob/master/.github/LICENSE.md) tool and you can [help contribute to the GitHub repository](https://github.com/Shopify/shopify-app-cli/blob/master/.github/CONTRIBUTING.md).
-
-## Developing Shopify App CLI
-
-Read the [development guide](https://github.com/Shopify/shopify-app-cli/wiki).
-
-## Where to get help
-
-- **[Open a GitHub issue](https://github.com/Shopify/shopify-app-cli/issues)** - To report bugs or request new features, open an issue in the Shopify App CLI repository.
-- **[Shopify Community Forums](https://community.shopify.com/)** - Visit our forums to connect with the community and learn more about Shopify App CLI development.
+- [Shopify Community Forums](https://community.shopify.com/) - Visit our forums to connect with the community and learn more about Shopify CLI development.

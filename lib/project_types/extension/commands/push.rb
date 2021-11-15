@@ -2,14 +2,15 @@
 require "shopify_cli"
 
 module Extension
-  module Commands
+  class Command
     class Push < ExtensionCommand
+      prerequisite_task ensure_project_type: :extension
+
       TIME_DISPLAY_FORMAT = "%B %d, %Y %H:%M:%S %Z"
 
       def call(args, name)
-        Commands::Register.new(@ctx).call(args, name) unless project.registered?
-        Commands::Build.new(@ctx).call(args, name)
-
+        Command::Register.new(@ctx).call(args, name) unless project.registered?
+        Command::Build.new(@ctx).call(args, name) unless specification_handler.specification.options[:skip_build]
         CLI::UI::Frame.open(@ctx.message("push.frame_title")) do
           updated_draft_version = update_draft
           show_message(updated_draft_version)
@@ -17,10 +18,7 @@ module Extension
       end
 
       def self.help
-        <<~HELP
-          Push the current extension to Shopify.
-            Usage: {{command:#{ShopifyCli::TOOL_NAME} push}}
-        HELP
+        ShopifyCLI::Context.new.message("push.help", ShopifyCLI::TOOL_NAME)
       end
 
       private
@@ -63,6 +61,8 @@ module Extension
             extension_context: specification_handler.extension_context(@ctx)
           )
         end
+      rescue Extension::Errors::ExtensionError => e
+        @ctx.abort(e)
       end
     end
   end

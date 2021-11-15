@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 require "test_helper"
 
-module ShopifyCli
+module ShopifyCLI
   class ProjectTypeTest < MiniTest::Test
     def setup
       super
@@ -29,20 +29,8 @@ module ShopifyCli
     def test_project_filepath
       assert_equal(
         Rails::Project.project_filepath("myfile"),
-        File.join(ShopifyCli::PROJECT_TYPES_DIR, "rails", "myfile")
+        File.join(ShopifyCLI::PROJECT_TYPES_DIR, "rails", "myfile")
       )
-    end
-
-    def test_duplicate_command
-      assert_raises ShopifyCli::Abort, "Can't register duplicate core command" do
-        ProjectType.register_command("Nonsense::Module::Help", "help")
-      end
-    end
-
-    def test_register_command_does_not_call_if_shallow
-      ShopifyCli::Commands.expects(:register).never
-      Rails::Project.project_load_shallow = true
-      Rails::Project.register_command("Nonsense::Module::Help", "help")
     end
   end
 end

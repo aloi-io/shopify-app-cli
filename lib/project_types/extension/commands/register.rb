@@ -1,8 +1,10 @@
 # frozen_string_literal: true
 
 module Extension
-  module Commands
+  class Command
     class Register < ExtensionCommand
+      prerequisite_task ensure_project_type: :extension
+
       def call(_args, _command_name)
         CLI::UI::Frame.open(@ctx.message("register.frame_title")) do
           @ctx.abort(@ctx.message("register.already_registered")) if project.registered?
@@ -18,10 +20,7 @@ module Extension
       end
 
       def self.help
-        <<~HELP
-          Register your local extension to a Shopify app
-              Usage: {{command:#{ShopifyCli::TOOL_NAME} register}}
-        HELP
+        ShopifyCLI::Context.new.message("register.help", ShopifyCLI::TOOL_NAME)
       end
 
       private
@@ -61,7 +60,7 @@ module Extension
 
       def abort_not_registered
         @ctx.puts(@ctx.message("register.confirm_abort"))
-        raise ShopifyCli::AbortSilent
+        raise ShopifyCLI::AbortSilent
       end
     end
   end

@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 require "test_helper"
 
-module ShopifyCli
+module ShopifyCLI
   class PartnersAPI
     class OrganizationsTest < MiniTest::Test
       include TestHelpers::Partners
@@ -207,6 +207,12 @@ module ShopifyCli
         assert_equal(421, orgs.first["id"])
         assert_equal(0, orgs.first["stores"].count)
         assert_equal(0, orgs.first["apps"].count)
+      end
+
+      def test_fetch_all_with_nil_resp
+        stub_partner_req_not_found("all_organizations")
+        orgs = PartnersAPI::Organizations.fetch_all(@context)
+        assert_equal([], orgs)
       end
     end
   end

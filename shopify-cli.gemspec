@@ -1,8 +1,8 @@
-require_relative "lib/shopify-cli/version"
+require_relative "lib/shopify_cli/version"
 
 Gem::Specification.new do |spec|
   spec.name = "shopify-cli"
-  spec.version = ShopifyCli::VERSION
+  spec.version = ShopifyCLI::VERSION
   spec.authors = ["Shopify"]
   spec.email = ["dev-tools-education@shopify.com"]
   spec.license = "MIT"
@@ -14,14 +14,14 @@ Gem::Specification.new do |spec|
     development process and lets you quickly add popular features, such as billing
     and webhooks.
   HERE
-  spec.homepage = "https://shopify.github.io/shopify-app-cli/"
-  spec.required_ruby_version = Gem::Requirement.new(">= 2.5")
+  spec.homepage = "https://shopify.github.io/shopify-cli/"
+  spec.required_ruby_version = Gem::Requirement.new(">= 2.6")
 
   spec.metadata["allowed_push_host"] = "https://rubygems.org"
 
   spec.metadata["homepage_uri"] = spec.homepage
-  spec.metadata["source_code_uri"] = "https://github.com/Shopify/shopify-app-cli"
-  spec.metadata["changelog_uri"] = "https://github.com/Shopify/shopify-app-cli/blob/master/CHANGELOG.md"
+  spec.metadata["source_code_uri"] = "https://github.com/Shopify/shopify-cli"
+  spec.metadata["changelog_uri"] = "https://github.com/Shopify/shopify-cli/blob/main/CHANGELOG.md"
 
   # Specify which files should be added to the gem when it is released.
   # The `git ls-files -z` loads the files in the RubyGem that have been added into git.
@@ -33,9 +33,13 @@ Gem::Specification.new do |spec|
   end
   spec.bindir = "bin"
   spec.require_paths = ["lib", "vendor"]
-  spec.extensions = ["ext/shopify-cli/extconf.rb"]
+  spec.executables << "shopify"
 
-  spec.add_development_dependency("bundler", "~> 1.17")
+  spec.add_development_dependency("bundler", "~> 2.2.2")
   spec.add_development_dependency("rake", "~> 12.3", ">= 12.3.3")
   spec.add_development_dependency("minitest", "~> 5.0")
+
+  spec.add_dependency("bugsnag", "~> 6.22")
+  spec.add_dependency("listen", "~> 3.7.0")
+  spec.add_dependency("theme-check", "~> 1.8.0")
 end

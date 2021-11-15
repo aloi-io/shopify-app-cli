@@ -1,4 +1,4 @@
-# Shopify App CLI design guidelines
+# Shopify CLI design guidelines
 
 #### Table of Contents
 
@@ -11,11 +11,11 @@
 
 ## Introduction
 
-The purpose of this doc is to outline all the heuristics, patterns, and templates we are using in the Shopify App CLI tool. All the content is based on the CLI Design and Style Guidelines doc, as well as the guidance on the Shopify cli-ui Github repo.
+The purpose of this doc is to outline all the heuristics, patterns, and templates we are using in the Shopify CLI tool. All the content is based on the CLI Design and Style Guidelines doc, as well as the guidance on the Shopify cli-ui Github repo.
 
 The most important principle to follow is **speed**. CLI tools are built to be extremely fast to use and to perform tasks quickly. If there is ever a collision between heuristics, default to whatever results in the fastest perceived or actual performance.
 
-To help visualize all the components and states available in the Shopify App CLI, we have created a [UI Kit](https://www.figma.com/file/ZXIgM4wQpfRNjGaIArjWOgTD/CLI-UI-Kit?node-id=67%3A0) in [Figma](http://figma.com) that you can use to build command flows.
+To help visualize all the components and states available in the Shopify CLI, we have created a [UI Kit](https://www.figma.com/file/ZXIgM4wQpfRNjGaIArjWOgTD/CLI-UI-Kit?node-id=67%3A0) in [Figma](http://figma.com) that you can use to build command flows.
 
 *Figma is a free web-based design tool.*
 
@@ -30,7 +30,7 @@ The user understands the following mechanics of a CLI:
 When creating a new command or subcommand there are a few things to keep in mind.
 
 ### What is the quickest way to execute a command?
-Commands are best executed autonomously. Most of the time the command should be self contained and should not requre additional input from the user. For example when running `shopify populate products` the command will execute without additional inputs required from the user even though the command could ask for things like `product name`, `price`, etc.
+Commands are best executed autonomously. Most of the time the command should be self contained and should not require additional input from the user. For example when running `shopify populate products` the command will execute without additional inputs required from the user even though the command could ask for things like `product name`, `price`, etc.
 
 When creating a new command or subcommand consider how much information is absolutely necessary for the command to execute autonomously. If a command always requires arguments or additional information then  adding smart defaults could help make inputting the command faster. 
 

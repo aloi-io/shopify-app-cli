@@ -2,8 +2,8 @@
 require "shopify_cli"
 
 module Extension
-  module Commands
-    class ExtensionCommand < ShopifyCli::Command
+  class Command
+    class ExtensionCommand < ShopifyCLI::Command::SubCommand
       def project
         @project ||= ExtensionProject.current
       end

@@ -12,11 +12,13 @@ module Extension
           property! :git_template, converts: :to_str
           property! :required_fields, accepts: Array, default: -> { [] }
           property! :required_shop_beta_flags, accepts: Array, default: -> { [] }
+          property! :cli_package_name, accepts: String, converts: :to_str, default: ""
         end
 
         def self.build(feature_set_attributes)
           feature_set_attributes.each_with_object(OpenStruct.new) do |(identifier, feature_attributes), feature_set|
-            feature_set[identifier] = ShopifyCli::ResolveConstant
+            next if feature_attributes.nil?
+            feature_set[identifier] = ShopifyCLI::ResolveConstant
               .call(identifier, namespace: Features)
               .rescue { OpenStruct }
               .then { |c| c.new(**feature_attributes) }

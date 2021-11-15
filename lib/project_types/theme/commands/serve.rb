@@ -1,30 +1,30 @@
 # frozen_string_literal: true
+require "shopify_cli/theme/dev_server"
+
 module Theme
-  module Commands
-    class Serve < ShopifyCli::Command
-      prerequisite_task :ensure_themekit_installed
+  class Command
+    class Serve < ShopifyCLI::Command::SubCommand
+      DEFAULT_HTTP_HOST = "127.0.0.1"
 
       options do |parser, flags|
-        parser.on("--env=ENV") { |env| flags[:env] = env }
-        parser.on("--allow-live") { flags["allow-live"] = true }
-        parser.on("--notify=FILES") { |files| flags["notify"] = files }
+        parser.on("--host=HOST") { |host| flags[:host] = host.to_s }
+        parser.on("--port=PORT") { |port| flags[:port] = port.to_i }
+        parser.on("--poll") { flags[:poll] = true }
       end
 
       def call(*)
-        if options.flags[:env]
-          env = options.flags[:env]
-          options.flags.delete(:env)
+        flags = options.flags.dup
+        host = flags[:host] || DEFAULT_HTTP_HOST
+        ShopifyCLI::Theme::DevServer.start(@ctx, ".", http_bind: host, **flags) do |syncer|
+          UI::SyncProgressBar.new(syncer).progress(:upload_theme!, delay_low_priority_files: true)
         end
-
-        flags = Themekit.add_flags(options.flags)
-
-        CLI::UI::Frame.open(@ctx.message("theme.serve.serve")) do
-          Themekit.serve(@ctx, flags: flags, env: env)
-        end
+      rescue ShopifyCLI::Theme::DevServer::AddressBindingError
+        raise ShopifyCLI::Abort,
+          ShopifyCLI::Context.message("theme.serve.error.address_binding_error", ShopifyCLI::TOOL_NAME)
       end
 
       def self.help
-        ShopifyCli::Context.message("theme.serve.help", ShopifyCli::TOOL_NAME)
+        ShopifyCLI::Context.message("theme.serve.help", ShopifyCLI::TOOL_NAME)
       end
     end
   end

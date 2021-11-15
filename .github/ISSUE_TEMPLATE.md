@@ -24,10 +24,13 @@ Tip: include an error message (in a `<details></details>` tag) if your issue is 
 1.
 1.
 
-## Reduced test case
 
-The best way to get your bug fixed is to provide a [reduced test case](https://developer.mozilla.org/en-US/docs/Mozilla/QA/Reducing_testcases).
+## Stacktrace
 
+<!--Stacktrace
+Add any stacktrace that might help debug the reported issue.
+Otherwise, delete this section.
+-->
 
 
 ## Specifications

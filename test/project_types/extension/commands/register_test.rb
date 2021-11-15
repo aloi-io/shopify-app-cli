@@ -6,11 +6,11 @@ module Extension
   module Commands
     class RegisterTest < MiniTest::Test
       include TestHelpers::FakeUI
-      include ExtensionTestHelpers::Messages
 
       def setup
         super
-        ShopifyCli::ProjectType.load_type(:extension)
+        ShopifyCLI::ProjectType.load_type(:extension)
+        ShopifyCLI::Tasks::EnsureProjectType.stubs(:call)
         @project = ExtensionTestHelpers.fake_extension_project(with_mocks: true, registration_id: nil)
         @specification_handler = ExtensionTestHelpers.test_specification_handler
 
@@ -18,15 +18,16 @@ module Extension
       end
 
       def test_help_implemented
-        assert_nothing_raised { refute_nil Commands::Register.help }
+        assert_nothing_raised { refute_nil Command::Register.help }
       end
 
       def test_if_extension_is_already_registered_the_register_command_aborts
+        # skip("Need to revisit processing of arguments to subcommands")
         @project.expects(:registered?).returns(true).once
         Tasks::CreateExtension.any_instance.expects(:call).never
         ExtensionProject.expects(:write_env_file).never
 
-        io = capture_io_and_assert_raises(ShopifyCli::Abort) { run_register_command }
+        io = capture_io_and_assert_raises(ShopifyCLI::Abort) { run_register_command }
 
         assert_message_output(io: io, expected_content: @context.message("register.already_registered"))
       end
@@ -42,7 +43,7 @@ module Extension
           .returns(false)
           .once
 
-        io = capture_io_and_assert_raises(ShopifyCli::AbortSilent) { run_register_command }
+        io = capture_io_and_assert_raises(ShopifyCLI::AbortSilent) { run_register_command }
 
         assert_message_output(io: io, expected_content: [
           @context.message("register.confirm_abort"),
@@ -60,7 +61,6 @@ module Extension
             registration_id: 55,
             last_user_interaction_at: Time.now.utc,
           )
-
         )
         refute @project.registered?
 
@@ -101,11 +101,7 @@ module Extension
       private
 
       def run_register_command
-        Commands::Register.ctx = @context
-        Commands::Register.call(
-          [],
-          :register
-        )
+        run_cmd("extension register")
       end
     end
   end

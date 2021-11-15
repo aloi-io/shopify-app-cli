@@ -2,38 +2,20 @@ require "test_helper"
 
 module Rails
   module Commands
-    class Fake < ShopifyCli::Command
-      class << self
-        def help
-          "basic rails help"
-        end
-
-        def extended_help
-          "extended rails help"
-        end
-      end
+    class Fake < ShopifyCLI::Command
     end
   end
 end
 
-module ShopifyCli
+module ShopifyCLI
   module Commands
-    class FakeCommand < ShopifyCli::Command
-      class << self
-        def help
-          "basic help"
-        end
-
-        def extended_help
-          "extended help"
-        end
-      end
+    class FakeCommand < ShopifyCLI::Command::ProjectCommand
     end
 
     class HelpTest < MiniTest::Test
       def setup
         super
-        ShopifyCli::Commands.register(:FakeCommand, "fake", "fake_path", true)
+        ShopifyCLI::Commands.register(:FakeCommand, "fake", "fake_path", true)
       end
 
       def test_default_behavior_lists_tasks
@@ -41,47 +23,8 @@ module ShopifyCli
           run_cmd("help")
         end
         output = io.join
-
-        assert_match("Available core commands:", output)
+        assert_match(/Use .*shopify help <command>.* to display detailed information about a specific command./, output)
         assert_match(/Usage: .*shopify/, output)
-      end
-
-      def test_local_commands_available_within_a_project
-        Project.stubs(:current_project_type).returns("rails")
-        Project.stubs(:project_name).returns("myapp")
-        ShopifyCli::Commands.register("Rails::Commands::Fake", "fake_rails")
-
-        io = capture_io do
-          run_cmd("help")
-        end
-        output = io.join
-
-        assert_match(/Available commands for Ruby on Rails App projects.*fake_rails/m, output)
-      end
-
-      def test_local_commands_not_available_outside_a_project
-        Project.stubs(:current_project_type).returns(nil)
-        ShopifyCli::Commands.register("Rails::Commands::Fake", "fake_rails")
-
-        io = capture_io do
-          run_cmd("help")
-        end
-        output = io.join
-
-        refute_match(/Available commands for Ruby on Rails App projects.*fake_rails/m, output)
-      end
-
-      def test_shows_current_project_path_and_type
-        Project.stubs(:current_project_type).returns("rails")
-        Project.stubs(:project_name).returns("my_app")
-        ShopifyCli::Commands.register("Rails::Commands::Fake", "fake_rails")
-
-        io = capture_io do
-          run_cmd("help")
-        end
-        output = io.join
-
-        assert_match("Project: my_app (Ruby on Rails App)", output)
       end
 
       def test_extended_help_for_individual_command
@@ -89,7 +32,7 @@ module ShopifyCli
           run_cmd("help fake")
         end
         output = io.join
-        assert_match(/basic help.*extended help/m, output)
+        assert_match("shopifycli.help", output)
       end
     end
   end
