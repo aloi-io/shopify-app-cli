@@ -1,15 +1,15 @@
 require "shopify_cli"
 require "json"
 
-module ShopifyCli
+module ShopifyCLI
   module Commands
-    class AppList < ShopifyCli::Command
+    class AppList < ShopifyCLI::Command
       def self.help
-        ShopifyCli::Context.message("core.app:list.help", ShopifyCli::TOOL_NAME)
+        ShopifyCLI::Context.message("List apps", ShopifyCLI::TOOL_NAME)
       end
 
       def call(_args, _name)
-        resp = ShopifyCli::PartnersAPI.query(@ctx, "apps_list")
+        resp = ShopifyCLI::PartnersAPI.query(@ctx, "apps_list")
 
         apps = resp['data']['apps']['edges'].map { |app|
           app['node']

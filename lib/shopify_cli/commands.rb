@@ -30,6 +30,9 @@ module ShopifyCLI
     register :Version, "version", "shopify_cli/commands/version", true
     register :Whoami, "whoami", "shopify_cli/commands/whoami", true
     register :App, "app", "shopify_cli/commands/app", true
+    register :AppList, "list", "shopify_cli/commands/app_list", true
+    register :AppUpdate, "update", "shopify_cli/commands/app_update", true
+    register :Introspect, "introspect", "shopify_cli/commands/introspect", true
 
     autoload :Connect, "shopify_cli/commands/connect"
   end

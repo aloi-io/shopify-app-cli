@@ -1,0 +1,31 @@
+query introspectType {
+  __type(name: "AppUpdateInput") {
+      name
+      description
+      fields {
+        name
+        args {
+          name
+        }
+        type {
+          name
+        }
+      }
+      inputFields {
+        name
+        description
+        defaultValue
+        type {
+          name
+          description
+          interfaces {
+            name
+          }
+          kind
+          ofType {
+            name
+          }
+        }
+      }
+  }
+}
